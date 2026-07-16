@@ -8,19 +8,19 @@ This guide details the steps to deploy the PathFinder AI application as two sepa
 
 ## 🐍 Backend Deployment on Render
 
-You can deploy the backend using either Render's native **Python** environment or **Docker** environment.
+You can deploy the backend using Render's native **Python** environment (Recommended) or the automatically detected **Node.js** environment.
 
 ### Option A: Using Render Blueprints (Recommended)
-1. Commit all files (including the newly added [render.yaml](file:///l:/Nxtwave%20hackaton/render.yaml)) and push them to your GitHub repository.
+1. Commit all files (including [render.yaml](file:///l:/Nxtwave%20hackaton/render.yaml)) and push them to your GitHub repository.
 2. In the Render Dashboard, click **New** -> **Blueprint**.
-3. Link your GitHub repository. Render will automatically detect the blueprint and configure the service name, build commands, and initial environment variables.
+3. Link your GitHub repository. Render will automatically configure the service using Python, set the build commands, and set the environment variables.
 
-### Option B: Manual Web Service Setup (Python Env)
+### Option B: Manual Web Service Setup (Python Environment - Recommended)
 1. In the Render Dashboard, click **New +** and select **Web Service**.
 2. Link your GitHub repository.
 3. Configure the following fields:
    - **Name**: `pathfinder-backend`
-   - **Environment**: `Python`
+   - **Runtime**: `Python`  <-- *Make sure to select Python*
    - **Root Directory**: `(leave blank)`
    - **Build Command**: `pip install -r backend/requirements.txt`
    - **Start Command**: `python run.py`
@@ -31,14 +31,11 @@ You can deploy the backend using either Render's native **Python** environment o
    - `CORS_ORIGINS`: `https://your-frontend-domain.vercel.app` (Replace with your actual deployed frontend URL once deployed)
    - `PRODUCTION`: `true`
 
-### Option C: Manual Web Service Setup (Docker Env)
-1. In the Render Dashboard, click **New +** and select **Web Service**.
-2. Link your GitHub repository.
-3. Configure the following fields:
-   - **Environment**: `Docker`
-   - **Docker Context**: `backend`
-   - **Dockerfile Path**: `backend/Dockerfile`
-4. Add the same **Environment Variables** as listed above.
+### Option C: Standby Node.js Environment (Zero-Configuration Fallback)
+If Render automatically builds your repository as a Node.js project (due to the root-level `package.json`), the build will still succeed!
+- **Build Command**: `yarn build` (which automatically runs `pip install -r backend/requirements.txt` via our `package.json` configuration)
+- **Start Command**: `yarn start` (which runs `python run.py` to start the backend)
+- Simply configure the **Environment Variables** in the Render settings tab as described in Option B above.
 
 ---
 

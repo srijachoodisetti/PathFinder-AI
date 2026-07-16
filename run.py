@@ -1,6 +1,6 @@
-import subprocess
 import sys
 import os
+import subprocess
 import time
 
 def setup_backend(backend_dir):
@@ -45,70 +45,70 @@ def setup_backend(backend_dir):
             print(f"[ERROR] Failed to install backend dependencies: {e}")
             sys.exit(1)
 
-def find_uvicorn(backend_dir):
-    is_windows = sys.platform.startswith('win')
-    
-    # In Render or production, rely on system PATH uvicorn
-    if os.environ.get("RENDER") or os.environ.get("PRODUCTION"):
-        return "uvicorn"
-        
-    if is_windows:
-        paths = [
-            os.path.join(backend_dir, "venv", "Scripts", "uvicorn.exe"),
-            os.path.join(backend_dir, "venv", "Scripts", "uvicorn"),
-        ]
-    else:
-        paths = [
-            os.path.join(backend_dir, "venv", "bin", "uvicorn"),
-        ]
-        
-    for path in paths:
-        if os.path.exists(path):
-            return path
-            
-    return "uvicorn"
-
 def main():
     backend_dir = os.path.abspath("backend")
+    is_windows = sys.platform.startswith('win')
+    
+    # Check if we are running in Render or production environments
+    is_prod = os.environ.get("RENDER") or os.environ.get("PRODUCTION")
     
     print("*** Starting PathFinder AI Backend Runner ***\n")
     
-    # Perform startup validation/setup
+    # Perform startup validation/setup (local dev only)
     setup_backend(backend_dir)
     
+    # Self-healing venv re-execution for local development
+    if not is_prod:
+        # Determine the virtual environment python path
+        if is_windows:
+            venv_python = os.path.abspath(os.path.join(backend_dir, "venv", "Scripts", "python.exe"))
+            if not os.path.exists(venv_python):
+                venv_python = os.path.abspath(os.path.join(backend_dir, "venv", "Scripts", "python"))
+        else:
+            venv_python = os.path.abspath(os.path.join(backend_dir, "venv", "bin", "python"))
+            
+        current_python = os.path.abspath(sys.executable)
+        
+        # If virtual environment Python exists and we aren't currently running it, re-execute the script
+        if os.path.exists(venv_python) and current_python != venv_python:
+            print(f"[INFO] Re-executing runner with virtual environment python: {venv_python}")
+            try:
+                rc = subprocess.call([venv_python] + sys.argv)
+                sys.exit(rc)
+            except KeyboardInterrupt:
+                sys.exit(0)
+            except Exception as e:
+                print(f"[ERROR] Failed to re-execute with virtual environment python: {e}")
+                sys.exit(1)
+                
     # Resolve host and port dynamically
     host = "0.0.0.0"
     port = int(os.environ.get("PORT", 8000))
     
-    # Determine backend start command
-    uvicorn_path = find_uvicorn(backend_dir)
+    # Change current working directory to backend so Uvicorn resolves app imports cleanly
+    os.chdir(backend_dir)
+    sys.path.insert(0, backend_dir)
     
-    if uvicorn_path == "uvicorn":
-        backend_cmd = ["uvicorn", "app.main:app", "--host", host, "--port", str(port)]
-    else:
-        backend_cmd = [uvicorn_path, "app.main:app", "--host", host, "--port", str(port)]
-        
-    print(f"[START] Launching Backend Server on {host}:{port}...")
+    # Add backend to PYTHONPATH env var so Uvicorn child processes inherit the search path
+    os.environ["PYTHONPATH"] = backend_dir + os.pathsep + os.environ.get("PYTHONPATH", "")
+    
+    # Determine if we should enable reload (disable on production/Render)
+    reload = not is_prod
+    
+    print(f"[START] Launching Backend Server on {host}:{port} (reload={reload})...")
+    
+    # Import uvicorn at runtime to verify it is installed
     try:
-        p_back = subprocess.Popen(backend_cmd, cwd=backend_dir)
+        import uvicorn
+    except ImportError:
+        print("[ERROR] uvicorn is not installed. Please run: pip install -r backend/requirements.txt")
+        sys.exit(1)
         
-        # Keep main process alive & monitor child process
-        while True:
-            if p_back.poll() is not None:
-                print(f"\n[WARNING] Backend terminated with exit code {p_back.returncode}")
-                sys.exit(p_back.returncode)
-            time.sleep(1)
-            
+    # Start Uvicorn programmatically in the current process
+    try:
+        uvicorn.run("app.main:app", host=host, port=port, reload=reload)
     except KeyboardInterrupt:
-        print("\n[STOP] Shutting down backend gracefully...")
-        if p_back.poll() is None:
-            p_back.terminate()
-            try:
-                p_back.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                print("Force-killing backend process...")
-                p_back.kill()
-        print("[SUCCESS] Backend stopped.")
+        print("\n[STOP] Backend stopped.")
 
 if __name__ == "__main__":
     main()
