@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "PathFinder AI - Personalized Learning Platform",
   "scripts": {
+    "postinstall": "pip install -r backend/requirements.txt",
     "build": "pip install -r backend/requirements.txt",
     "dev": "python run.py",
     "start": "python run.py"
