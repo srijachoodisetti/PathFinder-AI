@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     
     # CORS
-    CORS_ORIGINS: List[str] = ["*"]
+    CORS_ORIGINS: List[str] = [i.strip() for i in os.getenv("CORS_ORIGINS", "*").split(",") if i.strip()]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
