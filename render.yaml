@@ -1,18 +1,64 @@
-# Render Blueprint Specification for PathFinder AI Backend
+# ============================================================
+# PathFinder AI — Render Blueprint
+# Deploys: Backend (Web Service) + PostgreSQL Database
+# Frontend: Deploy separately as a Render Static Site
+# ============================================================
+
 services:
+  # ── Backend Web Service ─────────────────────────────────────
   - type: web
     name: pathfinder-backend
-    env: python
+    runtime: python
+    region: singapore          # Change to: oregon, frankfurt, ohio as needed
+    plan: free                 # Upgrade to starter ($7/mo) for always-on
+
+    # Root directory (where run.py lives)
+    rootDir: .
+
+    # Build: install Python dependencies
     buildCommand: pip install -r backend/requirements.txt
+
+    # Start: run the FastAPI server via run.py
     startCommand: python run.py
+
+    # Health check path (FastAPI root returns 200)
+    healthCheckPath: /
+
     envVars:
-      - key: PORT
-        value: 8000
+      # ── Required: Auto-generated ───────────────────────────
       - key: SECRET_KEY
         generateValue: true
+
+      # ── Required: Linked to internal Render PostgreSQL ─────
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pathfinder-db
+          property: connectionString
+
+      # ── Required: Set manually in Render dashboard ─────────
       - key: GEMINI_API_KEY
-        sync: false
+        sync: false             # Must be added manually in Render environment tab
+
+      # ── Required: Your deployed Render frontend URL ─────────
       - key: CORS_ORIGINS
-        value: "*"
+        sync: false             # Set to: https://pathfinder-frontend.onrender.com
+
+      # ── Optional: SkillBridge AI ATS microservice ──────────
+      - key: SKILLBRIDGE_ATS_URL
+        value: "https://skillbridge-ai.onrender.com"
+
+      # ── Internal flags ─────────────────────────────────────
       - key: PRODUCTION
         value: "true"
+      - key: RENDER
+        value: "true"
+      - key: PORT
+        value: "10000"          # Render assigns its own port; this is the fallback
+
+  # ── PostgreSQL Database ─────────────────────────────────────
+databases:
+  - name: pathfinder-db
+    databaseName: pathfinder
+    user: pathfinder_user
+    plan: free                  # Free tier: 1GB storage, 90-day limit
+    region: singapore           # Must match backend region
