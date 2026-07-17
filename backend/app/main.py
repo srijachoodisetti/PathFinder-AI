@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
-from app.routers import auth, tutor, course, quiz, student, teacher, parent, admin
+from app.routers import auth, tutor, course, quiz, student, teacher, parent, admin, engineering, ai_features, personalization, assessment, community, career
 from app.models.user import User, Student
 from app.models.course import Course, Lesson
 from app.models.quiz import Quiz
@@ -26,6 +26,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import time
+from fastapi import Request, Response
+from fastapi.responses import JSONResponse
+
+# Simple token bucket in-memory rate limiter
+RATE_LIMIT_WINDOW = 60 # seconds
+MAX_REQUESTS_PER_WINDOW = 100
+ip_request_history = {} # ip -> list of timestamps
+
+@app.middleware("http")
+async def security_and_rate_limiting_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    current_time = time.time()
+    
+    # 1. Clean history
+    if client_ip not in ip_request_history:
+        ip_request_history[client_ip] = []
+    
+    # Keep only timestamps in current window
+    ip_request_history[client_ip] = [
+        t for t in ip_request_history[client_ip]
+        if current_time - t < RATE_LIMIT_WINDOW
+    ]
+    
+    # 2. Check limit
+    if len(ip_request_history[client_ip]) >= MAX_REQUESTS_PER_WINDOW:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please try again later."}
+        )
+        
+    ip_request_history[client_ip].append(current_time)
+    
+    # 3. Process Request
+    response: Response = await call_next(request)
+    
+    # 4. Append Security Headers
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+    
+    return response
+
 # Register routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(tutor.router, prefix=f"{settings.API_V1_STR}/tutor", tags=["tutor"])
@@ -35,6 +79,12 @@ app.include_router(student.router, prefix=f"{settings.API_V1_STR}/student", tags
 app.include_router(teacher.router, prefix=f"{settings.API_V1_STR}/teacher", tags=["teacher"])
 app.include_router(parent.router, prefix=f"{settings.API_V1_STR}/parent", tags=["parent"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
+app.include_router(engineering.router, prefix=f"{settings.API_V1_STR}/engineering", tags=["engineering"])
+app.include_router(ai_features.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
+app.include_router(personalization.router, prefix=f"{settings.API_V1_STR}/personalization", tags=["personalization"])
+app.include_router(assessment.router, prefix=f"{settings.API_V1_STR}/assessment", tags=["assessment"])
+app.include_router(community.router, prefix=f"{settings.API_V1_STR}/community", tags=["community"])
+app.include_router(career.router, prefix=f"{settings.API_V1_STR}/career", tags=["career"])
 
 @app.get("/")
 def read_root():

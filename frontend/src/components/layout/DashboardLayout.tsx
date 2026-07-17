@@ -17,7 +17,12 @@ import {
   X,
   FileText,
   BrainCircuit,
-  HeartHandshake
+  HeartHandshake,
+  Video,
+  Briefcase,
+  Code,
+  FolderGit2,
+  Landmark
 } from 'lucide-react';
 import { ClayCard, ClayButton } from '../ui';
 
@@ -37,26 +42,42 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
     if (role === 'student') {
       return [
         { path: '/dashboard', label: 'Student Dashboard', icon: GraduationCap },
+        { path: '/academic', label: 'Academic Learning', icon: BookOpen },
+        { path: '/videos', label: 'Free Video Library', icon: Video },
+        { path: '/placement', label: 'Placement Prep', icon: Award },
+        { path: '/coding', label: 'Coding Hub', icon: Code },
+        { path: '/projects', label: 'Project Hub', icon: FolderGit2 },
+        { path: '/exams', label: 'Assessment Center', icon: Award },
+        { path: '/forum', label: 'Campus Forum', icon: MessageSquare },
+        { path: '/groups', label: 'Study Groups', icon: Users },
+        { path: '/campus', label: 'Campus Hub', icon: Landmark },
+        { path: '/career', label: 'AI Career Mentor', icon: Compass },
+        { path: '/career-dashboard', label: 'Resume ATS Checker', icon: Briefcase },
+        { path: '/internships', label: 'Internships Tracker', icon: Briefcase },
+        { path: '/certifications', label: 'Certifications', icon: Award },
         { path: '/ai-tutor', label: 'AI Tutor Chat', icon: BrainCircuit },
-        { path: '/courses', label: 'Subjects & Lessons', icon: BookOpen },
-        { path: '/quizzes', label: 'Quiz Center', icon: Award },
+        { path: '/settings', label: 'Settings', icon: Settings },
       ];
     } else if (role === 'teacher') {
       return [
-        { path: '/dashboard', label: 'Teacher Dashboard', icon: Users },
-        { path: '/lesson-plans', label: 'AI Lesson Plans', icon: FileText },
-        { path: '/courses', label: 'Manage Courses', icon: BookOpen },
-        { path: '/quizzes', label: 'AI Quiz Builder', icon: Award },
+        { path: '/dashboard', label: 'Faculty Dashboard', icon: Users },
+        { path: '/faculty', label: 'Manage & Generate', icon: FileText },
+        { path: '/exam-builder', label: 'Exam Builder', icon: FileText },
+        { path: '/forum', label: 'Moderate Forum', icon: MessageSquare },
+        { path: '/campus', label: 'Campus Hub', icon: Landmark },
+        { path: '/academic', label: 'Syllabus Review', icon: BookOpen },
+        { path: '/settings', label: 'Settings', icon: Settings },
       ];
     } else if (role === 'parent') {
       return [
         { path: '/dashboard', label: 'Parent Portal', icon: HeartHandshake },
+        { path: '/settings', label: 'Settings', icon: Settings },
       ];
     } else if (role === 'admin') {
       return [
         { path: '/dashboard', label: 'System Admin', icon: Settings },
-        { path: '/users', label: 'Manage Users', icon: Users },
-        { path: '/courses', label: 'Global Courses', icon: BookOpen },
+        { path: '/admin', label: 'Curriculum & Users', icon: Users },
+        { path: '/settings', label: 'Settings', icon: Settings },
       ];
     }
     return [];
@@ -87,6 +108,21 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
               PathFinder <span className="text-secondary">AI</span>
             </span>
           </div>
+        </div>
+
+        {/* Global Search Bar */}
+        <div className="hidden md:flex items-center relative max-w-xs w-full mx-4">
+          <input
+            type="text"
+            placeholder="Search courses, exams..."
+            className="w-full pl-10 pr-4 py-2 text-xs font-semibold bg-slate-50 border border-slate-100 rounded-xl outline-none focus:bg-white focus:border-primary transition-all"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                navigate('/academic');
+              }
+            }}
+          />
+          <Compass size={14} className="absolute left-3.5 text-slate-400 pointer-events-none" />
         </div>
 
         {/* User telemetry bar */}

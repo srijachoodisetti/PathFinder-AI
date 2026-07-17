@@ -1,144 +1,49 @@
-# PathFinder AI 🌱 - Personalized Learning for Every Child
+# PathFinder AI: Personalized Engineering Learning Ecosystem
 
-**PathFinder AI** is an intelligent personalized learning platform designed to empower children, especially those in rural and underserved communities, with high-quality education. Built under the theme of **Sustainability & Social Impact**, it addresses UN Sustainable Development Goal 4 (Quality Education) by offering cutting-edge AI tutoring, voice interfaces, multilingual support, and offline-first functionalities.
-
----
-
-## 🚀 Key Features
-
-1.  **AI Conversational Tutor (Gemini 1.5 Flash):** Chat interface with step-by-step math and science problem explanations.
-2.  **Homework scanner (OCR):** Upload base64 scans of handwritten workbook questions to let the AI solve them.
-3.  **Offline-First Synchronizer:** Save lesson notes, flashcards, and quizzes offline. Answers are cached in LocalStorage and automatically synced when connection returns.
-4.  **Vocal Progress Reports (Vernacular support):** Transcribes speech and translates performance reports into Hindi, Telugu, Tamil, Malayalam, Marathi, Bengali, and Kannada voice memos for parents.
-5.  **Gamified Learning Streaks:** Earn experience points (XP) and unlock progress badges to maintain streaks.
-6.  **Classroom Analytics:** Educator dashboards highlighting class averages, weak topics, and student drop-out alerts.
+PathFinder AI is an enterprise-grade, PWA-enabled, AI-powered learning and assessment platform built for engineering students, faculty, and administrative staff. It optimizes university curriculum navigation, suggests industry certifications, auto-grades coding and descriptive exams, and fosters collaborative community learning workspaces.
 
 ---
 
-## 🛠️ Tech Stack
+## Technical Stack
 
-*   **Frontend:** React 19, TypeScript, Vite, Tailwind CSS (Claymorphic Theme), Zustand, Framer Motion, Recharts, Axios.
-*   **Backend:** FastAPI, Python, SQLAlchemy, JWT Authentication, Pydantic.
-*   **AI integrations:** Google Gemini SDK, Google Text-to-Speech free browser/API routing, Gemini Vision OCR.
-*   **Deployment:** Docker, docker-compose, SQLite (development) / PostgreSQL (production compatibility).
+*   **Frontend**: React 19, TypeScript, Recharts (analytics dashboards), Tailwind CSS, Lucide icons, PWA manifest triggers.
+*   **Backend**: FastAPI, SQLAlchemy, Pydantic data schemas, Uvicorn server nodes.
+*   **AI Models**: Google Gemini 1.5 API wrappers (notes synthesis, exam graders, mock interview dialogue simulators, Mermaid.js software architecture draft engines).
+*   **Database**: SQLite (Local development), PostgreSQL compatible.
+*   **Authentication**: Firebase Admin Authentication.
 
 ---
 
-## 📁 Directory Structure
+## Repository Structure
 
 ```
-/
-├── docker-compose.yml       # Production services orchestrator
-├── README.md                # General guidance
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── ui/          # Claymorphic cards, buttons, modals, input elements
-│   │   │   ├── layout/      # Navbars, Sidebars
-│   │   │   └── ai/          # OCR, Voice interactives
-│   │   ├── store/           # authStore (Zustand), offlineStore
-│   │   └── pages/           # Landing, Login, Student, Teacher, Parent, Admin dashboards
-│   └── tailwind.config.js   # Premium Claymorphic shadows config
-└── backend/
-    ├── requirements.txt     # Python backend libraries
-    ├── Dockerfile           # Backend container
-    └── app/
-        ├── main.py          # FastAPI application startup & seeder
-        ├── core/            # Config, Security, Database
-        ├── services/        # Gemini, Speech, OCR logic
-        └── routers/         # Endpoint paths
+├── backend/                  # FastAPI backend server
+│   ├── app/
+│   │   ├── core/             # Database session configurations
+│   │   ├── models/           # SQLAlchemy schemas (personalization, community, exams)
+│   │   ├── routers/          # API endpoints controllers
+│   │   └── schemas/          # Pydantic validation types
+│   ├── seed_db.py            # SQLite database seeder
+│   └── requirements.txt      # Python dependencies list
+└── frontend/                 # React frontend application
+    ├── public/               # manifest.json PWA triggers
+    ├── src/
+    │   ├── components/       # Claymorphic UI widgets and layouts
+    │   ├── pages/            # Core views (dashboards, forum, exam centers)
+    │   └── store/            # Zustand global stores (auth, offline state)
 ```
 
 ---
 
-## 📦 Installation & Setup
+## Platform Core Modules
 
-### Option 1: Run Frontend & Backend Concurrently (Quick Start)
-
-To start both servers with a single command (which also checks for virtual environments and automatically installs any missing dependencies):
-
-Run this command in the project root directory:
-```bash
-python run.py
-```
-
-Or, if you prefer using npm:
-```bash
-npm run dev
-```
-
-Both the backend (FastAPI at `http://localhost:8000`) and frontend (Vite at `http://localhost:5173`) will start up concurrently. Press `Ctrl+C` in the terminal to stop both services cleanly.
-
----
-
-### Option 2: Run Locally (Manual setup)
-
-If you prefer to run the services in separate terminal windows:
-
-#### 1. Setup Backend
-1.  Navigate to the backend:
-    ```bash
-    cd backend
-    ```
-2.  Create virtual environment & install requirements:
-    ```bash
-    python -m venv venv
-    .\venv\Scripts\activate
-    pip install -r requirements.txt
-    ```
-3.  Run the FastAPI application (Uvicorn):
-    ```bash
-    uvicorn app.main:app --reload
-    ```
-    The backend will start at `http://localhost:8000`. It automatically seeds a default set of mock users and courses at first run.
-
-#### 2. Setup Frontend
-1.  Navigate to the frontend:
-    ```bash
-    cd ../frontend
-    ```
-2.  Install packages:
-    ```bash
-    npm install
-    ```
-3.  Launch Vite dev server:
-    ```bash
-    npm run dev
-    ```
-    Open your browser at the displayed port (usually `http://localhost:5173`).
-
----
-
-### Option 2: Run via Docker (Zero Configuration)
-
-Build and run both the database and the backend app under a shared network:
-```bash
-docker-compose up --build
-```
-*   FastAPI backend is exposed on port `8000`.
-*   PostgreSQL database runs on port `5432`.
-
----
-
-## 🧪 Testing Guide
-
-We have integrated testing capabilities:
-1.  **Backend unit tests:**
-    ```bash
-    cd backend
-    pytest
-    ```
-2.  **Frontend production validation:**
-    ```bash
-    cd frontend
-    npm run build
-    ```
-
----
-
-## 🔑 Environment Variables
-
-Create a `.env` file in the root or set inside `docker-compose.yml`:
-*   `GEMINI_API_KEY`: Official Google Gemini API Key. (If empty, the system runs a premium educational simulator so the application remains 100% functional out-of-the-box for hackathon reviews).
-*   `DATABASE_URL`: PostgreSQL connection string (defaults to `sqlite:///./pathfinder.db` if empty).
-*   `SECRET_KEY`: Custom string used for hashing JWT tokens.
+1.  **Academic Learning**: Select branch, semester, browse notes, formulas, and generate AI mind maps.
+2.  **Assessment Center**: Take MCQ, descriptive, or coding mock exams with countdown timers and AI graders.
+3.  **Campus Forum**: Community boards supporting likes, upvotes, pins, and **Ask AI Doubt** drawers.
+4.  **Projects Board**: Coordinate repository task boards via Kanban layouts.
+5.  **AI Career Mentor**: Explores skill gaps and suggests course roadmaps.
+6.  **Career Success Hub**: Upload resume for SkillBridge AI ATS scoring, receive Gemini-powered improvement tips, generate semester-wise career roadmaps, and practice with role-specific AI interview questions.
+7.  **Placement Prep**: DSA sheets, mock interviews, aptitude practice, and company-wise questions.
+8.  **Collaboration & Community**: Study groups, project boards, discussion forums, and resource sharing.
+9.  **AI Personalization Engine**: Tracks weak topics, recommends next study steps based on CGPA, attendance, and quiz history.
+10. **Admin Telemetry**: Monitors response logs, server memory loads, and active accounts.

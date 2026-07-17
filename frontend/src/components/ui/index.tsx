@@ -60,7 +60,8 @@ interface ClayInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 export const ClayInput = React.forwardRef<HTMLInputElement, ClayInputProps>(
   ({ label, error, className = '', id, ...props }, ref) => {
-    const inputId = id || React.useId();
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
     return (
       <div className="flex flex-col gap-1 w-full text-left">
         {label && (
@@ -97,7 +98,8 @@ interface ClaySelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> 
 }
 export const ClaySelect = React.forwardRef<HTMLSelectElement, ClaySelectProps>(
   ({ label, error, options, className = '', id, ...props }, ref) => {
-    const selectId = id || React.useId();
+    const generatedId = React.useId();
+    const selectId = id || generatedId;
     return (
       <div className="flex flex-col gap-1 w-full text-left">
         {label && (

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship as orm_relationship
 from datetime import datetime, timezone
 from app.core.database import Base
 
@@ -14,10 +14,21 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+    # New fields
+    uid = Column(String, unique=True, index=True, nullable=True) # Firebase UID
+    phone = Column(String, nullable=True)
+    university = Column(String, nullable=True)
+    department = Column(String, nullable=True)
+    semester = Column(String, nullable=True)
+    year = Column(String, nullable=True)
+    google_provider = Column(Boolean, default=False)
+    profile_photo = Column(String, nullable=True)
+    last_login = Column(DateTime, nullable=True)
+
     # Relationships
-    student_profile = relationship("Student", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    teacher_profile = relationship("Teacher", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    parent_profile = relationship("Parent", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    student_profile = orm_relationship("Student", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    teacher_profile = orm_relationship("Teacher", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    parent_profile = orm_relationship("Parent", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class Student(Base):
     __tablename__ = "students"
@@ -31,7 +42,7 @@ class Student(Base):
     weak_topics = Column(Text, nullable=True)  # JSON or comma-separated string
     language_preference = Column(String, default="English")
 
-    user = relationship("User", back_populates="student_profile")
+    user = orm_relationship("User", back_populates="student_profile")
 
 class Teacher(Base):
     __tablename__ = "teachers"
@@ -41,7 +52,7 @@ class Teacher(Base):
     subject_specialization = Column(String, nullable=True)
     classes_managed = Column(String, nullable=True)  # Comma-separated grades
 
-    user = relationship("User", back_populates="teacher_profile")
+    user = orm_relationship("User", back_populates="teacher_profile")
 
 class Parent(Base):
     __tablename__ = "parents"
@@ -49,5 +60,11 @@ class Parent(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     child_email = Column(String, nullable=True)
+    
+    # New Parent specific fields
+    child_name = Column(String, nullable=True)
+    child_registration_number = Column(String, nullable=True)
+    relationship = Column(String, nullable=True)
 
-    user = relationship("User", back_populates="parent_profile")
+    user = orm_relationship("User", back_populates="parent_profile")
+

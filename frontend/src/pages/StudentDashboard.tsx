@@ -22,7 +22,13 @@ import {
   RotateCcw,
   Calendar as CalendarIcon,
   Smile,
-  Target
+  Target,
+  Bell,
+  CheckCircle,
+  FileText,
+  AlertTriangle,
+  Code,
+  Briefcase
 } from 'lucide-react';
 import {
   AreaChart,
@@ -31,11 +37,11 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  CartesianGrid,
   RadialBarChart,
   RadialBar,
   Legend
@@ -43,46 +49,45 @@ import {
 
 export const StudentDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useAuthStore();
+  const { user, token, setUser } = useAuthStore();
+  const headers = { Authorization: `Bearer ${token}` };
   const { isOnline, queuedQuizzes, syncPendingData } = useOfflineStore();
 
   const [loading, setLoading] = useState(true);
-  const [recommendations, setRecommendations] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'journey' | 'analytics' | 'pomo'>('journey');
+
+  // Personalization Engine States
+  const [journeyData, setJourneyData] = useState<any>(null);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [learningPaths, setLearningPaths] = useState<any[]>([]);
+  const [weakTopics, setWeakTopics] = useState<any[]>([]);
+  const [revisionSchedule, setRevisionSchedule] = useState<any[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<any[]>([]);
+  
+  // Goals Config States
+  const [editingGoals, setEditingGoals] = useState(false);
+  const [targetCgpa, setTargetCgpa] = useState('8.5');
+  const [dailyHours, setDailyHours] = useState('2.0');
+  const [weeklyXp, setWeeklyXp] = useState('300');
+
+  // AI revision note state
+  const [aiNotes, setAiNotes] = useState('');
+  const [aiNotesLoading, setAiNotesLoading] = useState(false);
+
+  // Leaderboard & Achievements (Maintained from existing)
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [syncing, setSyncing] = useState(false);
-
-  // Daily Motivation
   const [motivation, setMotivation] = useState("Keep studying to make an impact! 🌱");
 
-  // Pomodoro timer states
-  const [pomoTime, setPomoTime] = useState(1500); // 25 minutes
+  // Pomodoro states
+  const [pomoTime, setPomoTime] = useState(1500);
   const [pomoActive, setPomoActive] = useState(false);
   const [pomoSession, setPomoSession] = useState<'study' | 'break'>('study');
 
-  // Study Goals state
-  const [goals, setGoals] = useState({
-    daily_hour_goal: 2.0,
-    weekly_xp_goal: 300,
-    completed_today_hours: 1.2
-  });
-  const [editingGoals, setEditingGoals] = useState(false);
-  const [goalDailyInput, setGoalDailyInput] = useState('2.0');
-  const [goalXpInput, setGoalXpInput] = useState('300');
-
-  // Calendar dates mock (highlighting streak days)
-  const currentMonthDays = Array.from({ length: 30 }, (_, i) => ({
-    day: i + 1,
-    studied: [12, 13, 14, 15].includes(i + 1), // highlight Rajesh streak days
-    hasGoal: [15, 20, 25].includes(i + 1)
-  }));
-
   useEffect(() => {
-    fetchDashboardData();
-    fetchMotivation();
-    fetchGoals();
-    
-    // Log dashboard visit to Firebase Analytics
+    fetchPersonalizationData();
+    fetchLeaderboardAndAchievements();
     if (analytics) {
       logEvent(analytics, 'login', { method: 'email', screen: 'student_dashboard' });
     }
@@ -101,77 +106,42 @@ export const StudentDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [pomoActive, pomoTime]);
 
-  const fetchDashboardData = async () => {
+  const fetchPersonalizationData = async () => {
     setLoading(true);
     try {
-      const recRes = await axios.get(`${API_URL}/student/recommendations`);
+      const journeyRes = await axios.get(`${API_URL}/personalization/learning-journey`, { headers });
+      setJourneyData(journeyRes.data);
+      setTargetCgpa(journeyRes.data.goals.target_cgpa || '8.5');
+      setDailyHours(journeyRes.data.goals.daily_target.toString() || '2.0');
+      setWeeklyXp(journeyRes.data.goals.weekly_xp_target.toString() || '300');
+
+      const recRes = await axios.get(`${API_URL}/personalization/recommendations`, { headers });
       setRecommendations(recRes.data);
 
-      // Fetch leaderboard from Firestore (with local fallback/sync)
-      try {
-        const firestoreLeaderboard = await firestoreService.getLeaderboard();
-        if (firestoreLeaderboard && firestoreLeaderboard.length > 0) {
-          setLeaderboard(firestoreLeaderboard);
-        } else {
-          const leadRes = await axios.get(`${API_URL}/quizzes/analytics/leaderboard`);
-          setLeaderboard(leadRes.data);
-          // Sync to Firestore
-          for (const item of leadRes.data) {
-            await firestoreService.updateLeaderboardScore(item.email, item.full_name, item.xp_points);
-          }
-        }
-      } catch (err) {
-        console.error("Firestore leaderboard error, falling back to local backend:", err);
-        const leadRes = await axios.get(`${API_URL}/quizzes/analytics/leaderboard`);
-        setLeaderboard(leadRes.data);
-      }
+      const pathRes = await axios.get(`${API_URL}/personalization/learning-paths`, { headers });
+      setLearningPaths(pathRes.data);
 
-      // Fetch achievements from Firestore (with local fallback/sync)
-      if (user) {
-        try {
-          const firestoreAchievements = await firestoreService.getAchievements(user.email);
-          if (firestoreAchievements && firestoreAchievements.length > 0) {
-            setAchievements(firestoreAchievements);
-          } else {
-            const achRes = await axios.get(`${API_URL}/student/achievements`);
-            setAchievements(achRes.data);
-            // Sync to Firestore
-            for (const item of achRes.data) {
-              await firestoreService.saveAchievement(user.email, {
-                title: item.title,
-                description: item.description,
-                xp: item.xp_reward || 50
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Firestore achievements error, falling back to local backend:", err);
-          const achRes = await axios.get(`${API_URL}/student/achievements`);
-          setAchievements(achRes.data);
-        }
-      }
+      const weakRes = await axios.get(`${API_URL}/personalization/weak-topics`, { headers });
+      setWeakTopics(weakRes.data);
+
+      const revRes = await axios.get(`${API_URL}/personalization/revision-schedule`, { headers });
+      setRevisionSchedule(revRes.data);
+
+      const analyticsRes = await axios.get(`${API_URL}/personalization/analytics`, { headers });
+      setAnalyticsData(analyticsRes.data);
     } catch (err) {
-      console.error(err);
+      console.error("Personalization loading error", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchMotivation = async () => {
+  const fetchLeaderboardAndAchievements = async () => {
     try {
-      const res = await axios.get(`${API_URL}/student/motivation`);
-      setMotivation(res.data.quote);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchGoals = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/student/goals`);
-      setGoals(res.data);
-      setGoalDailyInput(res.data.daily_hour_goal.toString());
-      setGoalXpInput(res.data.weekly_xp_goal.toString());
+      const leadRes = await axios.get(`${API_URL}/quizzes/analytics/leaderboard`, { headers });
+      setLeaderboard(leadRes.data);
+      const achRes = await axios.get(`${API_URL}/student/achievements`, { headers });
+      setAchievements(achRes.data);
     } catch (err) {
       console.error(err);
     }
@@ -179,67 +149,52 @@ export const StudentDashboard: React.FC = () => {
 
   const handleSaveGoals = async () => {
     try {
-      const updated = {
-        daily_hour_goal: parseFloat(goalDailyInput) || 2.0,
-        weekly_xp_goal: parseInt(goalXpInput) || 300,
-        completed_today_hours: goals.completed_today_hours
-      };
-      await axios.put(`${API_URL}/student/goals`, updated);
-      setGoals(updated);
+      const res = await axios.post(`${API_URL}/personalization/goals`, {
+        target_cgpa: parseFloat(targetCgpa) || 8.5,
+        daily_study_hours: parseFloat(dailyHours) || 2.0,
+        weekly_xp_goal: parseInt(weeklyXp) || 300,
+        monthly_cert_goal: 2
+      }, { headers });
+      setJourneyData({
+        ...journeyData,
+        goals: {
+          daily_target: res.data.daily_study_hours,
+          weekly_xp_target: res.data.weekly_xp_goal,
+          completed_today_hours: journeyData.goals.completed_today_hours
+        }
+      });
       setEditingGoals(false);
-
-      // Sync updated goals to Firestore
-      if (user) {
-        await firestoreService.syncUserProfile(user.email, {
-          daily_hour_goal: updated.daily_hour_goal,
-          weekly_xp_goal: updated.weekly_xp_goal
-        });
-      }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleSyncClick = async () => {
-    setSyncing(true);
-    await syncPendingData();
-    await fetchDashboardData();
-    setSyncing(false);
-  };
-
-  const handleClaimStreak = async () => {
+  const generateRevisionNotes = async (topicName: string) => {
+    setAiNotesLoading(true);
+    setAiNotes('');
     try {
-      const res = await axios.post(`${API_URL}/student/claim-streak`);
-      if (user && user.student_profile) {
-        const updatedUser = {
-          ...user,
-          student_profile: {
-            ...user.student_profile,
-            streak: res.data.streak
-          }
-        };
-        setUser(updatedUser);
-
-        // Sync streak details to Firestore
-        await firestoreService.syncUserProfile(user.email, {
-          streak: res.data.streak
-        });
-      }
-      fetchDashboardData();
+      const res = await axios.post(`${API_URL}/ai/generate-notes`, {
+        subject: "Database Management Systems",
+        topic: topicName,
+        note_type: "revision"
+      }, { headers });
+      setAiNotes(res.data.notes);
     } catch (err) {
       console.error(err);
+    } finally {
+      setAiNotesLoading(false);
     }
   };
 
-  // Pomodoro Controls
   const togglePomo = () => setPomoActive(!pomoActive);
+  
   const resetPomo = () => {
     setPomoActive(false);
     setPomoTime(pomoSession === 'study' ? 1500 : 300);
   };
+
   const handlePomoFinish = () => {
     setPomoActive(false);
-    // Play synthesis alert to bypass empty sound assets
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(
         pomoSession === 'study' ? "Study session finished! Take a break." : "Break finished! Let's study."
@@ -248,10 +203,10 @@ export const StudentDashboard: React.FC = () => {
     }
     if (pomoSession === 'study') {
       setPomoSession('break');
-      setPomoTime(300); // 5 mins break
+      setPomoTime(300);
     } else {
       setPomoSession('study');
-      setPomoTime(1500); // 25 mins study
+      setPomoTime(1500);
     }
   };
 
@@ -261,344 +216,317 @@ export const StudentDashboard: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
   };
 
-  // Analytics charts datasets
-  const progressData = [
-    { name: 'Mon', xp: 40 },
-    { name: 'Tue', xp: 80 },
-    { name: 'Wed', xp: 120 },
-    { name: 'Thu', xp: 180 },
-    { name: 'Fri', xp: 210 },
-    { name: 'Sat', xp: 240 },
-    { name: 'Sun', xp: 240 },
-  ];
-
-  const subjectData = [
-    { subject: 'Math', A: 85, B: 110, fullMark: 150 },
-    { subject: 'Science', A: 90, B: 130, fullMark: 150 },
-    { subject: 'English', A: 75, B: 130, fullMark: 150 },
-    { subject: 'Reasoning', A: 80, B: 100, fullMark: 150 },
-    { subject: 'Computer', A: 95, B: 120, fullMark: 150 },
-  ];
-
-  const radialData = [
-    { name: 'AI Confidence', value: 85, fill: '#8884d8' },
-    { name: 'Accuracy', value: 78, fill: '#83a6ed' },
-    { name: 'Completion', value: 92, fill: '#8dd1e1' }
-  ];
-
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 w-full text-left">
-        <SkeletonLoader lines={4} />
+      <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto p-4 text-left">
+        <SkeletonLoader lines={6} />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full text-left">
-      {/* Sync sync Warning */}
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full p-4 text-left font-body">
+      {/* Offline warning */}
       {queuedQuizzes.length > 0 && (
         <ClayAlert variant="warning" className="flex justify-between items-center">
-          <div>
-            <span className="font-bold">Offline records stored locally:</span> You completed {queuedQuizzes.length} quiz attempts while offline.
-          </div>
-          <ClayButton
-            onClick={handleSyncClick}
-            disabled={syncing || !isOnline}
-            className="flex items-center gap-1.5 !py-1 px-4 text-xs font-bold bg-white text-warning border-warning/20 shadow-sm"
-          >
-            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
-            <span>{syncing ? 'Sync Now' : 'Sync pending'}</span>
-          </ClayButton>
+          <div><span className="font-bold">Offline Sync pending:</span> You have {queuedQuizzes.length} offline attempts.</div>
         </ClayAlert>
       )}
 
-      {/* Daily Motivation Message bar */}
-      <ClayCard className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-3">
-        <div className="p-2 bg-primary/10 rounded-xl text-primary animate-bounce">
-          <Smile size={20} />
+      {/* Notifications Bar */}
+      <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-3">
+        <div className="p-2 bg-primary/10 rounded-xl text-primary">
+          <Bell size={18} className="animate-swing" />
         </div>
-        <div className="flex flex-col text-left">
-          <span className="text-[10px] font-bold text-primary uppercase tracking-wider">AI Daily Motivation</span>
-          <p className="text-xs font-semibold text-text/80">{motivation}</p>
+        <div className="flex-1 flex flex-col text-left">
+          <span className="text-[10px] font-extrabold text-primary uppercase tracking-wider">AI Recommendation Reminder</span>
+          <p className="text-xs font-semibold text-slate-700">
+            {journeyData?.today_recommendation}
+          </p>
         </div>
-      </ClayCard>
+      </div>
 
       {/* Welcome Banner */}
       <ClayCard className="p-6 bg-gradient-to-r from-primary/10 via-secondary/5 to-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
         <div className="flex flex-col gap-1 z-10">
-          <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-text">
-            Hello, {user?.full_name}! 👋
-          </h2>
-          <p className="text-sm text-text/60">
-            Keep learning and unlock achievements. Target Class: <strong className="text-primary">{user?.student_profile?.grade || 'Grade 6'}</strong>.
+          <h2 className="font-heading font-extrabold text-2xl text-slate-800">Welcome, {user?.full_name}! 🚀</h2>
+          <p className="text-sm text-slate-500 font-medium">
+            Semester: <strong className="text-primary">Sem 5</strong> | Branch: <strong className="text-primary">CSE</strong> | Target CGPA: <strong className="text-secondary">{targetCgpa}</strong>
           </p>
         </div>
-
         <div className="flex gap-3 z-10">
-          <ClayButton
-            onClick={handleClaimStreak}
-            variant="accent"
-            className="flex items-center gap-2 !py-2.5 shadow-md"
-          >
-            <Flame size={16} fill="currentColor" />
-            <span>Extend Streak</span>
+          <ClayButton onClick={() => setActiveTab('journey')} className={`text-xs py-2 ${activeTab === 'journey' ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600'}`}>
+            Learning Journey
           </ClayButton>
-          
-          <ClayButton
-            onClick={() => navigate('/ai-tutor')}
-            variant="primary"
-            className="flex items-center gap-2 !py-2.5 shadow-md"
-          >
-            <BrainCircuit size={16} />
-            <span>AI Tutor Chat</span>
+          <ClayButton onClick={() => setActiveTab('analytics')} className={`text-xs py-2 ${activeTab === 'analytics' ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600'}`}>
+            Analytics & Progress
+          </ClayButton>
+          <ClayButton onClick={() => setActiveTab('pomo')} className={`text-xs py-2 ${activeTab === 'pomo' ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600'}`}>
+            Pomodoro Study Timer
           </ClayButton>
         </div>
       </ClayCard>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Recharts Analytics & Syllabus */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          
-          {/* Main Area Chart */}
-          <ClayCard className="flex flex-col gap-4">
-            <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="font-heading font-bold text-base flex items-center gap-1.5">
-                <TrendingUp size={18} className="text-secondary" />
-                This Week's Learning Progress (XP)
-              </h3>
-              <span className="text-xs text-text/50 font-semibold">Weekly Goal: {goals.weekly_xp_goal} XP</span>
-            </div>
-
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={progressData}>
-                  <defs>
-                    <linearGradient id="colorXp" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="xp" stroke="#4F46E5" strokeWidth={3} fillOpacity={1} fill="url(#colorXp)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </ClayCard>
-
-          {/* New Recharts: Subject Radar & Radial ACCURACY dials */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Subject Radar Chart */}
-            <ClayCard className="flex flex-col gap-3">
-              <h4 className="font-heading font-bold text-xs text-text/50 uppercase border-b pb-2">Subject Performance Matrix</h4>
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={subjectData}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={10} />
-                    <PolarRadiusAxis angle={30} domain={[0, 150]} stroke="#cbd5e1" fontSize={8} />
-                    <Radar name="Rajesh Kumar" dataKey="A" stroke="#4F46E5" fill="#4F46E5" fillOpacity={0.5} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </ClayCard>
-
-            {/* Radial Bar Chart: Accuracy and Confidence Index */}
-            <ClayCard className="flex flex-col gap-3">
-              <h4 className="font-heading font-bold text-xs text-text/50 uppercase border-b pb-2">AI Learning Insights</h4>
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart cx="50%" cy="50%" innerRadius="15%" outerRadius="80%" barSize={10} data={radialData}>
-                    <RadialBar
-                      label={{ position: 'insideStart', fill: '#1e293b', fontSize: 9 }}
-                      background
-                      dataKey="value"
-                    />
-                    <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: 9 }} />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-              </div>
-            </ClayCard>
-          </div>
-
-          {/* Subjects Navigation Grid */}
-          <div className="flex flex-col gap-3">
-            <h3 className="font-heading font-bold text-base px-1">Study Your Subjects</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {[
-                { name: 'Mathematics', emoji: '📐', color: 'bg-blue-50 text-blue-600 border-blue-100' },
-                { name: 'Science', emoji: '🔬', color: 'bg-green-50 text-green-600 border-green-100' },
-                { name: 'English', emoji: '📖', color: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
-                { name: 'Social Studies', emoji: '🌍', color: 'bg-amber-50 text-amber-600 border-amber-100' },
-                { name: 'Computer Science', emoji: '💻', color: 'bg-purple-50 text-purple-600 border-purple-100' },
-                { name: 'Logical Reasoning', emoji: '🧩', color: 'bg-pink-50 text-pink-600 border-pink-100' },
-              ].map((subj) => (
-                <div
-                  key={subj.name}
-                  onClick={() => navigate(`/courses?subject=${subj.name}`)}
-                  className={`clay-card-flat p-4 cursor-pointer hover:-translate-y-1 transition-all duration-200 flex flex-col items-center justify-center text-center gap-2 ${subj.color}`}
-                >
-                  <span className="text-3xl select-none">{subj.emoji}</span>
-                  <span className="text-xs font-bold text-text">{subj.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Pomodoro, Streaks Grid, Recommendations */}
-        <div className="flex flex-col gap-6">
-          
-          {/* Pomodoro Timer widget */}
-          <ClayCard className="flex flex-col gap-3.5 bg-gradient-to-br from-indigo-50/20 to-white relative overflow-hidden">
-            <h4 className="font-heading font-bold text-sm text-primary flex items-center gap-1.5">
-              ⏱️ Pomodoro Focus Timer
-            </h4>
-            <p className="text-xs text-text/60 leading-tight">
-              Focus 25 minutes on equations, take a 5 minute break.
-            </p>
-
-            <div className="flex flex-col items-center gap-2">
-              <span className="font-heading font-extrabold text-4xl text-text tracking-wide bg-slate-100 px-6 py-2.5 rounded-3xl shadow-inner border border-slate-200">
-                {formatPomoTime(pomoTime)}
-              </span>
-              <span className="text-[10px] font-bold uppercase text-primary tracking-widest leading-none">
-                Session: {pomoSession}
-              </span>
-            </div>
-
-            <div className="flex gap-2.5 justify-center mt-1">
-              <ClayButton
-                onClick={togglePomo}
-                variant="primary"
-                className="flex items-center gap-1 !py-1.5 px-4 text-xs font-bold shadow-sm"
-              >
-                {pomoActive ? <Pause size={12} /> : <Play size={12} />}
-                <span>{pomoActive ? 'Pause' : 'Start'}</span>
-              </ClayButton>
-              <ClayButton
-                onClick={resetPomo}
-                className="flex items-center gap-1 !py-1.5 px-4 text-xs font-bold border-slate-200 bg-white"
-              >
-                <RotateCcw size={12} />
-                <span>Reset</span>
-              </ClayButton>
-            </div>
-          </ClayCard>
-
-          {/* Visual Streak Calendar Grid */}
-          <ClayCard className="flex flex-col gap-3">
-            <h4 className="font-heading font-bold text-sm text-text/80 flex items-center gap-1.5 border-b pb-2">
-              <CalendarIcon size={16} className="text-secondary" />
-              Learning Calendar Streak
-            </h4>
-            <p className="text-[10px] text-text/50">Highlighting active days in July 2026</p>
-
-            <div className="grid grid-cols-7 gap-1.5 text-center mt-1">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                <span key={i} className="text-[9px] font-bold text-text/40">{d}</span>
-              ))}
-              {currentMonthDays.map((d) => (
-                <div
-                  key={d.day}
-                  className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-bold transition-all relative ${
-                    d.studied
-                      ? 'bg-gradient-to-br from-red-500 to-orange-500 text-white shadow-sm'
-                      : 'bg-slate-50 border border-slate-100 text-text/60'
-                  }`}
-                >
-                  <span>{d.day}</span>
-                  {d.hasGoal && (
-                    <span className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </ClayCard>
-
-          {/* Target Goals Config */}
-          <ClayCard className="flex flex-col gap-3 text-left">
-            <div className="flex justify-between items-center border-b pb-2">
-              <h4 className="font-heading font-bold text-sm text-text/80 flex items-center gap-1.5">
-                <Target size={16} className="text-primary" />
-                Study Goals
-              </h4>
-              <button
-                onClick={() => setEditingGoals(!editingGoals)}
-                className="text-xs text-primary hover:underline font-bold"
-              >
-                {editingGoals ? 'Cancel' : 'Edit'}
-              </button>
-            </div>
-
-            {editingGoals ? (
-              <div className="flex flex-col gap-3">
-                <ClayInput
-                  label="Daily Hour Target"
-                  type="number"
-                  step="0.5"
-                  value={goalDailyInput}
-                  onChange={(e) => setGoalDailyInput(e.target.value)}
-                />
-                <ClayInput
-                  label="Weekly XP Target"
-                  type="number"
-                  value={goalXpInput}
-                  onChange={(e) => setGoalXpInput(e.target.value)}
-                />
-                <ClayButton onClick={handleSaveGoals} variant="primary" className="!py-2 text-xs">
-                  Save Goals
-                </ClayButton>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3 text-xs leading-relaxed text-text/80 font-medium">
-                <div className="flex justify-between">
-                  <span>Daily Study Hours:</span>
-                  <span className="font-bold text-primary">{goals.completed_today_hours} / {goals.daily_hour_goal} Hrs</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Weekly Target XP:</span>
-                  <span className="font-bold text-success">{user?.student_profile?.xp_points || 0} / {goals.weekly_xp_goal} XP</span>
-                </div>
-              </div>
-            )}
-          </ClayCard>
-
-          {/* AI recommendations */}
-          <ClayCard className="flex flex-col gap-3.5 bg-gradient-to-br from-indigo-50/50 to-white">
-            <h4 className="font-heading font-bold text-sm text-primary flex items-center gap-1.5">
-              <Sparkles size={16} />
-              AI Recommendations
-            </h4>
-            <div className="flex flex-col gap-2.5">
-              {recommendations?.recommended_courses?.length > 0 ? (
-                recommendations.recommended_courses.map((c: any) => (
-                  <div
-                    key={c.id}
-                    onClick={() => navigate(`/courses?course_id=${c.id}`)}
-                    className="p-3 bg-white hover:bg-slate-50 border border-slate-150 rounded-2xl cursor-pointer flex justify-between items-center group shadow-sm"
-                  >
-                    <div className="flex flex-col text-left">
-                      <span className="text-xs font-extrabold text-text group-hover:text-primary transition-colors">
-                        {c.title}
-                      </span>
-                      <span className="text-[10px] text-text/50">{c.subject}</span>
+      {/* Tab Views */}
+      <div className="w-full">
+        {activeTab === 'journey' && journeyData && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Main Section (Recommendations & Learning Paths) */}
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              
+              {/* My AI Learning Journey Panel */}
+              <ClayCard className="flex flex-col gap-4">
+                <h3 className="font-heading font-extrabold text-lg text-slate-800 border-b pb-2">My AI Learning Journey</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Continue Learning */}
+                  <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Continue Learning</span>
+                      <h4 className="font-bold text-sm text-slate-700 mt-1">{journeyData.continue_learning.topic}</h4>
+                      <p className="text-xs text-slate-400">{journeyData.continue_learning.subject}</p>
                     </div>
-                    <ArrowRight size={14} className="text-text/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    <div className="mt-4">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+                        <span>Progress</span>
+                        <span>{journeyData.continue_learning.completion_percentage}%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div className="bg-primary h-full rounded-full" style={{ width: `${journeyData.continue_learning.completion_percentage}%` }} />
+                      </div>
+                    </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-xs font-semibold text-text/40 py-2">
-                  No recommendations yet. Let's do some syllabus study!
+
+                  {/* Dynamic Goals progress */}
+                  <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daily Study Hours Goal</span>
+                      <h4 className="font-bold text-lg text-primary mt-1">{journeyData.goals.completed_today_hours} hrs / {journeyData.goals.daily_target} hrs</h4>
+                    </div>
+                    <div className="mt-4">
+                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div className="bg-primary h-full rounded-full" style={{ width: `${Math.min(100, (journeyData.goals.completed_today_hours / journeyData.goals.daily_target) * 100)}%` }} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-left">
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Strong Subjects</span>
+                    <ul className="list-disc pl-4 text-xs font-semibold text-emerald-700 mt-1.5 flex flex-col gap-1">
+                      {journeyData.strong_subjects.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </div>
+                  <div className="p-4 bg-rose-50/50 border border-rose-100 rounded-2xl text-left">
+                    <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Weak Subjects</span>
+                    <ul className="list-disc pl-4 text-xs font-semibold text-rose-700 mt-1.5 flex flex-col gap-1">
+                      {journeyData.weak_subjects.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </div>
+                </div>
+              </ClayCard>
+
+              {/* Learning Path roadmaps */}
+              <ClayCard className="flex flex-col gap-4">
+                <h3 className="font-bold text-base text-slate-800 flex items-center gap-1.5">
+                  <Compass size={18} className="text-primary" /> Learning Path Roadmaps
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {learningPaths.map((lp) => (
+                    <div key={lp.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase">{lp.level}</span>
+                        <h4 className="font-bold text-sm text-slate-700 mt-1.5">{lp.topic}</h4>
+                        <span className="text-[10px] font-bold text-slate-400">Duration: {lp.duration} | Difficulty: {lp.difficulty}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-extrabold text-slate-500 block mb-1">Priority: {lp.priority}</span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{lp.completion}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ClayCard>
+
+              {/* Weak Topic Detection Alert & Generator */}
+              <ClayCard className="flex flex-col gap-4">
+                <h3 className="font-bold text-base text-slate-800 flex items-center gap-1.5">
+                  <AlertTriangle size={18} className="text-rose-500 animate-pulse" />
+                  <span>Weak Topic Detector</span>
+                </h3>
+                {weakTopics.map((wt, idx) => (
+                  <div key={idx} className="p-4 bg-rose-50/50 border border-rose-100 rounded-2xl flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-bold text-sm text-rose-800">{wt.name}</h4>
+                        <span className="text-[10px] font-bold text-rose-600">Quiz Average: {wt.quiz_score}% | Study time: {wt.time_spent_mins} mins</span>
+                      </div>
+                      <ClayButton
+                        onClick={() => generateRevisionNotes(wt.name)}
+                        disabled={aiNotesLoading}
+                        className="py-1 px-3 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-extrabold rounded-xl"
+                      >
+                        {aiNotesLoading ? 'Generating...' : 'Compile Revision Notes'}
+                      </ClayButton>
+                    </div>
+                    {aiNotes && (
+                      <div className="p-4 bg-white border border-rose-100 rounded-xl text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap">
+                        {aiNotes}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </ClayCard>
             </div>
-          </ClayCard>
-        </div>
+
+            {/* Right Sidebar Section (Study list feeds, revision calendar & Career mentor) */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              {/* Recommendations feed list */}
+              <h3 className="font-bold text-base text-slate-700 pl-1">Dynamic Recommendations</h3>
+              <div className="flex flex-col gap-3">
+                {recommendations.map((rec) => (
+                  <div key={rec.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-extrabold text-secondary uppercase bg-secondary/10 px-2 py-0.5 rounded-full">{rec.category}</span>
+                      <span className="text-[10px] font-bold text-slate-400">{rec.priority} Priority</span>
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-800 leading-tight">{rec.title}</h4>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-normal">{rec.description}</p>
+                    <p className="text-[9px] font-bold text-primary mt-1">Reasons: {rec.reasons}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Revision schedule list */}
+              <h3 className="font-bold text-base text-slate-700 pl-1">Smart Revision Schedule</h3>
+              <div className="flex flex-col gap-3">
+                {revisionSchedule.map((rev) => (
+                  <div key={rev.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{rev.revision_type} Revision</span>
+                      <h4 className="font-bold text-xs text-slate-700 mt-1">Topic ID: {rev.topic_id}</h4>
+                    </div>
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">Scheduled</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Career alignment helper */}
+              <ClayCard className="flex flex-col gap-3">
+                <h3 className="font-bold text-base text-slate-800">Target Career: Software Engineer</h3>
+                <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                  Recommended next steps: Improve python algorithms metrics and apply to 2 remote internships.
+                </p>
+              </ClayCard>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start text-left">
+            {/* Main Graphs Grid */}
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              
+              {/* Learning Hours Chart */}
+              <ClayCard className="flex flex-col gap-4">
+                <h3 className="font-bold text-base text-slate-800">Weekly Learning Hours</h3>
+                <div className="h-56 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={analyticsData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} tickFormatter={(tick) => new Date(tick).toLocaleDateString([], { weekday: 'short' })} />
+                      <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
+                      <Tooltip />
+                      <Bar dataKey="learning_hours" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </ClayCard>
+
+              {/* Quiz scores & coding progress charts */}
+              <ClayCard className="flex flex-col gap-4">
+                <h3 className="font-bold text-base text-slate-800">Quiz Averages & Coding Progress</h3>
+                <div className="h-56 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={analyticsData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} tickFormatter={(tick) => new Date(tick).toLocaleDateString([], { weekday: 'short' })} />
+                      <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="quiz_scores_average" stroke="#10b981" fill="#10b981" fillOpacity={0.05} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </ClayCard>
+            </div>
+
+            {/* Attendance, CGPA & Skills progress right panels */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              
+              {/* Skill Proficiency stats */}
+              <h3 className="font-bold text-base text-slate-700 pl-1">Skill Proficiency</h3>
+              <ClayCard className="flex flex-col gap-4">
+                {[
+                  { name: 'Python Algorithms', level: 80 },
+                  { name: 'Database Queries (SQL)', level: 60 },
+                  { name: 'Frontend React UI', level: 45 }
+                ].map((sk, idx) => (
+                  <div key={idx} className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+                      <span>{sk.name}</span>
+                      <span>{sk.level}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-primary h-full rounded-full" style={{ width: `${sk.level}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </ClayCard>
+
+              {/* Readiness Scores & CGPA */}
+              <ClayCard className="p-5 flex flex-col gap-2 bg-slate-850 text-slate-800">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Placement Readiness Score</span>
+                <span className="text-3xl font-extrabold text-primary">72%</span>
+                <span className="text-xs text-slate-400 font-semibold mt-1">Average CGPA: 8.24 | Attendance: 84%</span>
+              </ClayCard>
+            </div>
+          </div>
+        )}
+
+        {/* Pomodoro Tab (Unmodified core functionality) */}
+        {activeTab === 'pomo' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left items-start">
+            <div className="lg:col-span-4 flex flex-col gap-4">
+              <h3 className="font-bold text-base text-slate-700 pl-1">Streak & Motivation</h3>
+              <ClayCard className="p-5 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-3xl border border-orange-200 shadow-sm flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-sm text-orange-800">Learning Streak</h4>
+                  <span className="text-2xl font-extrabold text-orange-700 flex items-center gap-1 mt-1">
+                    <Flame size={24} fill="currentColor" /> {user?.student_profile?.streak || 4} Days
+                  </span>
+                </div>
+              </ClayCard>
+            </div>
+
+            <div className="lg:col-span-8">
+              <ClayCard className="p-8 text-center flex flex-col items-center gap-5">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pomodoro study clock</span>
+                <div className="font-heading font-extrabold text-5xl text-slate-700 tabular-nums">
+                  {formatPomoTime(pomoTime)}
+                </div>
+                <div className="flex gap-3">
+                  <ClayButton onClick={togglePomo} className="bg-primary text-white hover:bg-secondary rounded-xl py-2 px-6 font-bold">
+                    {pomoActive ? <Pause size={14} /> : <Play size={14} />} {pomoActive ? 'Pause' : 'Start'}
+                  </ClayButton>
+                  <ClayButton onClick={resetPomo} className="bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl py-2 px-6 font-bold">
+                    <RotateCcw size={14} /> Reset
+                  </ClayButton>
+                </div>
+              </ClayCard>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
