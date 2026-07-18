@@ -17,8 +17,8 @@ services:
     # Root directory — repo root contains both backend/ and frontend/
     rootDir: .
 
-    # Build: Install Python dependencies, install Node, and build frontend
-    buildCommand: pip install -r backend/requirements.txt && cd frontend && npm install && npm run build
+    # Build: Run the unified build script (handles Node, React, and Python installation)
+    buildCommand: chmod +x build.sh && ./build.sh
 
     # Start: Run the unified start script which hosts uvicorn
     startCommand: python run.py
