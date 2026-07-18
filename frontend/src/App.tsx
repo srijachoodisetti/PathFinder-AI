@@ -32,12 +32,33 @@ const CampusHub = lazy(() => import('./pages/CampusHub').then(m => ({ default: m
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const CareerDashboard = lazy(() => import('./pages/CareerDashboard').then(m => ({ default: m.CareerDashboard })));
 
-// Protectors
+// ── Full-screen auth loading spinner ─────────────────────────────────────────
+const AuthLoadingScreen: React.FC = () => (
+  <div className="min-h-screen bg-[#F4F7FC] flex items-center justify-center flex-col gap-4">
+    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    <p className="text-slate-500 font-semibold text-sm">Verifying your session...</p>
+  </div>
+);
+
+// ── Root redirect — authenticated → /dashboard, unauthenticated → /login ─────
+const RootRedirect: React.FC = () => {
+  const { isAuthenticated, isInitializing } = useAuthStore();
+  if (isInitializing) return <AuthLoadingScreen />;
+  return isAuthenticated
+    ? <Navigate to="/dashboard" replace />
+    : <Navigate to="/login" replace />;
+};
+
+// ── Protected layout — blocks ALL private routes until auth is resolved ───────
 const ProtectedLayout: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  const { isAuthenticated, isInitializing } = useAuthStore();
+
+  // While Firebase / backend token is being verified, show spinner
+  if (isInitializing) return <AuthLoadingScreen />;
+
+  // Not authenticated after init → redirect to login
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
   return (
     <DashboardLayout>
       <Outlet />
@@ -45,14 +66,20 @@ const ProtectedLayout: React.FC = () => {
   );
 };
 
+// ── Redirect authenticated users away from login/signup pages ────────────────
+const PublicOnlyRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
+  const { isAuthenticated, isInitializing } = useAuthStore();
+  if (isInitializing) return <AuthLoadingScreen />;
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : element;
+};
+
+// ── Role-based dashboard redirect ────────────────────────────────────────────
 const DashboardRedirector: React.FC = () => {
   const { user } = useAuthStore();
-  
   if (user?.role === 'student') return <StudentDashboard />;
   if (user?.role === 'teacher') return <FacultyDashboard />;
   if (user?.role === 'parent') return <ParentDashboard />;
   if (user?.role === 'admin') return <AdminDashboard />;
-  
   return <Navigate to="/login" replace />;
 };
 
@@ -73,21 +100,28 @@ const AdminRoute: React.FC = () => {
 };
 
 function App() {
-  const { refreshMe } = useAuthStore();
+  const { refreshMe, setInitializing } = useAuthStore();
 
   useEffect(() => {
-    refreshMe();
+    // Kick off token validation. isInitializing stays true until this resolves,
+    // preventing any protected (or public-only) page from rendering prematurely.
+    refreshMe().finally(() => setInitializing(false));
   }, []);
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="p-8 text-center text-slate-400 font-bold">Compiling ecosystem module...</div>}>
+      <Suspense fallback={<AuthLoadingScreen />}>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          {/* Root — smart redirect depending on auth state */}
+          <Route path="/" element={<RootRedirect />} />
+
+          {/* Public Routes — redirect to dashboard if already logged in */}
+          <Route path="/login" element={<PublicOnlyRoute element={<Login />} />} />
+          <Route path="/signup" element={<PublicOnlyRoute element={<Signup />} />} />
+          <Route path="/forgot-password" element={<PublicOnlyRoute element={<ForgotPassword />} />} />
+
+          {/* Landing page (marketing) — always accessible */}
+          <Route path="/welcome" element={<LandingPage />} />
 
           {/* Guarded Routes */}
           <Route element={<ProtectedLayout />}>
@@ -110,7 +144,7 @@ function App() {
             <Route path="/campus" element={<CampusHub />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/career-dashboard" element={<CareerDashboard />} />
-            
+
             {/* Teacher/Faculty Specific */}
             <Route element={<TeacherRoute />}>
               <Route path="/faculty" element={<FacultyDashboard />} />
@@ -123,7 +157,7 @@ function App() {
             </Route>
           </Route>
 
-          {/* Fallback */}
+          {/* Fallback — unknown routes redirect to root smart-redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

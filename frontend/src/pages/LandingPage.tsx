@@ -150,8 +150,8 @@ export const LandingPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2 flex flex-col gap-4 text-left">
                 <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl">
-                  <h4 className="font-bold text-sm text-primary mb-1">Hi Rajesh! Continue Learning 📖</h4>
-                  <p className="text-xs text-text/70">Subject: Science - Solar Power & Energy</p>
+                  <h4 className="font-bold text-sm text-primary mb-1">Welcome back! Continue Learning 📖</h4>
+                  <p className="text-xs text-text/70">Subject: Mathematics – Algebra & Functions</p>
                   <div className="w-full bg-slate-200 h-2.5 rounded-full mt-3 overflow-hidden">
                     <div className="bg-primary h-full w-[70%] rounded-full" />
                   </div>
@@ -161,14 +161,14 @@ export const LandingPage: React.FC = () => {
                   <div className="p-3 bg-green-50 border border-green-100 rounded-xl flex items-center gap-3">
                     <span className="text-xl">🔥</span>
                     <div>
-                      <h5 className="font-bold text-xs text-green-800 leading-none">4 Days</h5>
+                      <h5 className="font-bold text-xs text-green-800 leading-none">5 Days</h5>
                       <span className="text-[10px] text-green-700">Study Streak</span>
                     </div>
                   </div>
                   <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-xl flex items-center gap-3">
                     <span className="text-xl">⭐</span>
                     <div>
-                      <h5 className="font-bold text-xs text-yellow-800 leading-none">240 XP</h5>
+                      <h5 className="font-bold text-xs text-yellow-800 leading-none">320 XP</h5>
                       <span className="text-[10px] text-yellow-700">Experience Points</span>
                     </div>
                   </div>
@@ -182,10 +182,10 @@ export const LandingPage: React.FC = () => {
                 </h4>
                 <p className="text-[10px] text-text/70">Based on your last quiz, let's practice:</p>
                 <div className="p-2 bg-white rounded-lg border border-slate-100 text-xs font-semibold text-primary cursor-pointer hover:underline">
-                  🔍 Divide Fractions Practice
+                  🔍 Quadratic Equations Practice
                 </div>
                 <div className="p-2 bg-white rounded-lg border border-slate-100 text-xs font-semibold text-primary cursor-pointer hover:underline">
-                  ☀️ Solar Heat Flow Note
+                  📐 Geometry Revision Note
                 </div>
               </div>
             </div>

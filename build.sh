@@ -18,8 +18,32 @@ echo "Root directory contents:"
 ls -la
 echo ""
 
-# ── Step 1: Install Node.js (Render has Node available, but ensure npm) ──
+# ── Step 1: Ensure Node.js and npm are installed and in PATH ──
 echo "▶ Step 1/4 — Checking Node.js and npm..."
+if ! command -v node &> /dev/null; then
+    echo "▶ Node.js not found in PATH. Installing Node.js dynamically for Render Python environment..."
+    NODE_VERSION=v20.11.0
+    
+    # Download the Node.js Linux x64 binary archive
+    echo "  Downloading Node.js ${NODE_VERSION}..."
+    curl -fsSL "https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.xz" -o node.tar.xz
+    
+    # Extract the archive
+    echo "  Extracting Node.js package..."
+    tar -xf node.tar.xz
+    
+    # Add Node.js binary directory to the active PATH
+    export PATH="$PWD/node-${NODE_VERSION}-linux-x64/bin:$PATH"
+    
+    # Clean up the archive file to save space
+    rm node.tar.xz
+    
+    echo "✓ Node.js installed dynamically at $(which node)"
+else
+    echo "✓ Node.js is already available: $(which node)"
+fi
+
+# Print versions for confirmation
 node --version
 npm --version
 echo "✓ Node.js and npm ready."

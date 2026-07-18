@@ -50,6 +50,7 @@ interface AuthState {
   token: string | null;
   user: UserProfile | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;  // true while validating session on first load
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<UserProfile>;
@@ -59,12 +60,14 @@ interface AuthState {
   setUser: (user: UserProfile) => void;
   clearError: () => void;
   refreshMe: () => Promise<UserProfile | null>;
+  setInitializing: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: savedToken,
   user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
   isAuthenticated: !!savedToken,
+  isInitializing: !!savedToken, // start initializing if we have a stored token to validate
   isLoading: false,
   error: null,
 
@@ -239,18 +242,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearError: () => set({ error: null }),
 
+  setInitializing: (value: boolean) => set({ isInitializing: value }),
+
   refreshMe: async () => {
     const { token } = get();
-    if (!token) return null;
+    if (!token) {
+      // No token — not initializing, not authenticated
+      set({ isInitializing: false, isAuthenticated: false });
+      return null;
+    }
     
     try {
       const response = await axios.get(`${API_URL}/auth/me`);
       localStorage.setItem('user', JSON.stringify(response.data));
-      set({ user: response.data, isAuthenticated: true });
+      set({ user: response.data, isAuthenticated: true, isInitializing: false });
       return response.data;
     } catch (err) {
-      // Token might be expired
+      // Token expired or invalid — clear session
       get().logout();
+      set({ isInitializing: false });
       return null;
     }
   },

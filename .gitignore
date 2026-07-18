@@ -35,3 +35,7 @@ pathfinder.db
 .idea/
 .DS_Store
 Thumbs.db
+
+# Node.js runtime downloaded by build.sh (Linux x64 binary, not needed in repo)
+node-v*-linux-x64/
+node.tar.xz
