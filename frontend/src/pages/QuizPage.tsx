@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthStore, API_URL } from '../store/authStore';
 import { useOfflineStore } from '../store/offlineStore';
-import { analytics } from '../lib/firebase';
-import { logEvent } from 'firebase/analytics';
 import { ClayCard, ClayButton, ClayAlert, SkeletonLoader } from '../components/ui';
 import {
   Award,
@@ -133,15 +131,6 @@ export const QuizPage: React.FC = () => {
 
     if (!isOnline) {
       queueQuizAttempt(selectedQuiz.id, calculatedScore, answers);
-      
-      // Log quiz completion to Firebase Analytics (offline case)
-      if (analytics) {
-        logEvent(analytics, 'quiz_completion', {
-          quiz_id: selectedQuiz.id,
-          score: calculatedScore,
-          offline: true
-        });
-      }
 
       setSubmitting(false);
       setPlaying(false);
@@ -167,14 +156,6 @@ export const QuizPage: React.FC = () => {
         answers: answers
       });
 
-      // Log quiz completion to Firebase Analytics (online case)
-      if (analytics) {
-        logEvent(analytics, 'quiz_completion', {
-          quiz_id: selectedQuiz.id,
-          score: calculatedScore,
-          offline: false
-        });
-      }
       
       setResult(res.data);
       setPlaying(false);

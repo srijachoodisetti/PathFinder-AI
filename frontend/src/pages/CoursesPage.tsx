@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore, API_URL } from '../store/authStore';
 import { useOfflineStore } from '../store/offlineStore';
-import { analytics } from '../lib/firebase';
-import { logEvent } from 'firebase/analytics';
 import { ClayCard, ClayButton, ClayAlert, SkeletonLoader } from '../components/ui';
 import {
   BookOpen,
@@ -35,15 +33,7 @@ export const CoursesPage: React.FC = () => {
     fetchCourses();
   }, [searchParams]);
 
-  useEffect(() => {
-    if (selectedCourse && analytics) {
-      logEvent(analytics, 'course_completion', {
-        course_id: selectedCourse.id,
-        course_title: selectedCourse.title,
-        subject: selectedCourse.subject
-      });
-    }
-  }, [selectedCourse]);
+  useEffect(() => {}, [selectedCourse]);
 
   const fetchCourses = async () => {
     setLoading(true);

@@ -8,7 +8,7 @@ import { loginSchema, type LoginInput } from '../lib/schemas/auth';
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loginWithGoogle, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, setError, formState: { errors } } = useForm<LoginInput>({
@@ -33,16 +33,6 @@ export const LoginForm: React.FC = () => {
 
     try {
       await login(data.email, data.password);
-      navigate('/dashboard');
-    } catch (err) {
-      // Error is handled in authStore
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    clearError();
-    try {
-      await loginWithGoogle();
       navigate('/dashboard');
     } catch (err) {
       // Error is handled in authStore
@@ -166,9 +156,8 @@ export const LoginForm: React.FC = () => {
           </label>
         </div>
 
-        {/* Buttons */}
+        {/* Sign In button */}
         <div className="flex flex-col gap-3 mt-2">
-          {/* Submit button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -177,42 +166,8 @@ export const LoginForm: React.FC = () => {
             {isLoading ? (
               <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <span>Login</span>
+              <span>Sign In</span>
             )}
-          </button>
-
-          <div className="flex items-center gap-2 my-1">
-            <div className="h-px bg-slate-200 flex-1" />
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">or</span>
-            <div className="h-px bg-slate-200 flex-1" />
-          </div>
-
-          {/* Google Sign-in */}
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-full font-bold text-sm shadow-[6px_6px_12px_#d1d9e6,-6px_-6px_12px_#ffffff] transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-98 flex items-center justify-center gap-2.5 cursor-pointer"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path
-                fill="#EA4335"
-                d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.33 0 3.328 2.68 1.406 6.58l3.86 3.185z"
-              />
-              <path
-                fill="#34A853"
-                d="M16.04 15.345c-1.07.728-2.43 1.164-4.04 1.164-2.927 0-5.41-1.982-6.29-4.664L1.83 15.02c1.91 3.79 5.86 6.38 10.17 6.38 3.1 0 5.92-1.04 8.01-2.827l-3.97-3.228z"
-              />
-              <path
-                fill="#4285F4"
-                d="M23.49 12.275c0-.827-.074-1.627-.21-2.4H12v4.545h6.455c-.278 1.48-.112 2.3-.955 2.873l3.97 3.227c2.327-2.145 3.97-5.29 3.97-8.945z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.71 11.845a7.042 7.042 0 0 1 0-2.08L1.85 6.58a12.025 12.025 0 0 0 0 10.84l3.86-3.185c-.23-.69-.35-1.42-.35-2.22l.35-.17z"
-              />
-            </svg>
-            <span>Continue with Google</span>
           </button>
         </div>
       </form>

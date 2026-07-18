@@ -3,9 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore, API_URL } from '../store/authStore';
 import { useOfflineStore } from '../store/offlineStore';
-import { firestoreService } from '../services/firestoreService';
-import { analytics } from '../lib/firebase';
-import { logEvent } from 'firebase/analytics';
 import { ClayCard, ClayButton, ClayAlert, ClayInput, SkeletonLoader } from '../components/ui';
 import {
   Flame,
@@ -88,9 +85,6 @@ export const StudentDashboard: React.FC = () => {
   useEffect(() => {
     fetchPersonalizationData();
     fetchLeaderboardAndAchievements();
-    if (analytics) {
-      logEvent(analytics, 'login', { method: 'email', screen: 'student_dashboard' });
-    }
   }, []);
 
   // Pomodoro ticker logic

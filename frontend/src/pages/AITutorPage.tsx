@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuthStore, API_URL } from '../store/authStore';
-import { firestoreService } from '../services/firestoreService';
-import { analytics } from '../lib/firebase';
-import { logEvent } from 'firebase/analytics';
 import { ClayCard, ClayButton, ClayAlert, SkeletonLoader } from '../components/ui';
 import { OCRScanner } from '../components/ai/OCRScanner';
 import { VoiceTutorController } from '../components/ai/VoiceTutorController';
@@ -63,25 +60,8 @@ export const AITutorPage: React.FC = () => {
 
   const fetchHistory = async () => {
     try {
-      if (user) {
-        const firestoreMessages = await firestoreService.getChatMessages(user.email);
-        if (firestoreMessages && firestoreMessages.length > 0) {
-          setMessages(firestoreMessages);
-          return;
-        }
-      }
       const res = await axios.get(`${API_URL}/tutor/history`);
       setMessages(res.data);
-      // Sync to Firestore
-      if (user) {
-        for (const msg of res.data) {
-          await firestoreService.saveChatMessage(user.email, {
-            content: msg.content,
-            is_from_user: msg.is_from_user,
-            audio_url: msg.audio_url
-          });
-        }
-      }
     } catch (err) {
       console.error(err);
     }
@@ -111,25 +91,6 @@ export const AITutorPage: React.FC = () => {
     };
     setMessages(prev => [...prev, userMsg]);
 
-    // Save user message to Firestore
-    if (user) {
-      firestoreService.saveChatMessage(user.email, {
-        content: userMsg.content,
-        is_from_user: true
-      }).catch(err => console.error("Error saving user message to Firestore:", err));
-    }
-
-    // Log event to Firebase Analytics
-    if (analytics) {
-      logEvent(analytics, 'ai_tutor_usage', {
-        prompt_length: textToSend.length,
-        has_image: !!imageBase64
-      });
-      if (voiceActive) {
-        logEvent(analytics, 'voice_tutor_usage');
-      }
-    }
-
     try {
       const response = await axios.post(`${API_URL}/tutor/chat`, {
         prompt: textToSend || "Explain the uploaded handwriting question",
@@ -148,15 +109,6 @@ export const AITutorPage: React.FC = () => {
         is_bookmarked: false
       };
       setMessages(prev => [...prev, aiMsg]);
-
-      // Save AI message to Firestore
-      if (user) {
-        firestoreService.saveChatMessage(user.email, {
-          content: aiMsg.content,
-          is_from_user: false,
-          audio_url: aiMsg.audio_url
-        }).catch(err => console.error("Error saving AI response to Firestore:", err));
-      }
 
       if (voiceActive && response.data.audio_url) {
         const audio = new Audio(response.data.audio_url);

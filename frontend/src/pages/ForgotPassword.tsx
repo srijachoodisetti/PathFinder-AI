@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../lib/firebase';
 import { API_URL } from '../store/authStore';
 import { ClayCard, ClayButton, ClayInput, ClayAlert } from '../components/ui';
 import { ArrowLeft, Send } from 'lucide-react';
@@ -22,26 +20,11 @@ export const ForgotPassword: React.FC = () => {
     setError(null);
     setMessage(null);
     try {
-      // 1. Firebase password reset email
-      await sendPasswordResetEmail(auth, email);
-
-      // 2. Call backend reset simulation for compatibility
+      // Backend password reset email (FastAPI sends the reset email)
       await axios.post(`${API_URL}/auth/forgot-password`, { email });
-
       setMessage("Password reset instructions have been sent to your email!");
     } catch (err: any) {
-      let errorMsg = "Something went wrong.";
-      if (err.code) {
-        if (err.code === 'auth/user-not-found') {
-          errorMsg = "We couldn't find a user with this email address.";
-        } else if (err.code === 'auth/invalid-email') {
-          errorMsg = "The email address is invalid.";
-        } else {
-          errorMsg = err.message;
-        }
-      } else {
-        errorMsg = err.response?.data?.detail || errorMsg;
-      }
+      const errorMsg = err.response?.data?.detail || "Something went wrong. Please try again.";
       setError(errorMsg);
     } finally {
       setLoading(false);
