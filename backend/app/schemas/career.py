@@ -81,3 +81,27 @@ class InterviewPrepRequest(BaseModel):
     target_role: str
     interview_type: str  # technical, hr, coding, mock
     difficulty: Optional[str] = "medium"
+
+
+class InterviewHistoryResponse(BaseModel):
+    id: int
+    user_id: int
+    target_role: str
+    interview_type: str
+    difficulty: str
+    questions_json: Optional[str] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+class RoadmapHistoryResponse(BaseModel):
+    id: int
+    user_id: int
+    target_role: str
+    branch: Optional[str] = None
+    semester: Optional[int] = None
+    roadmap_text: Optional[str] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True

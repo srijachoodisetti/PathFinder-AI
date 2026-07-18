@@ -52,7 +52,7 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
         { path: '/groups', label: 'Study Groups', icon: Users },
         { path: '/campus', label: 'Campus Hub', icon: Landmark },
         { path: '/career', label: 'AI Career Mentor', icon: Compass },
-        { path: '/career-dashboard', label: 'Resume ATS Checker', icon: Briefcase },
+        { path: '/career-dashboard', label: 'Resume & Career Intelligence', icon: Briefcase },
         { path: '/internships', label: 'Internships Tracker', icon: Briefcase },
         { path: '/certifications', label: 'Certifications', icon: Award },
         { path: '/ai-tutor', label: 'AI Tutor Chat', icon: BrainCircuit },

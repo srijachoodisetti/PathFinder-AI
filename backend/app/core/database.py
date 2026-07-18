@@ -19,6 +19,7 @@ engine = create_engine(
     connect_args=connect_args,
     pool_pre_ping=True,
     pool_recycle=300,   # Recycle connections every 5 minutes
+    future=True,        # Enable SQLAlchemy 2.0-style execution behavior
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

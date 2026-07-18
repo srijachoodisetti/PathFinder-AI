@@ -10,15 +10,16 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.routers.deps import get_current_user
 from app.models.user import User
-from app.models.career import ResumeAnalysis, ATSFeedback, CareerSuggestion, ResumeHistory
+from app.models.career import ResumeAnalysis, ATSFeedback, CareerSuggestion, ResumeHistory, InterviewHistory, RoadmapHistory
 from app.schemas.career import (
     ResumeAnalysisResponse, ATSFeedbackResponse, ResumeAnalysisWithFeedback,
     CareerSuggestionResponse, ResumeHistoryResponse, CareerDashboardResponse,
-    GenerateRoadmapRequest, InterviewPrepRequest
+    GenerateRoadmapRequest, InterviewPrepRequest, InterviewHistoryResponse, RoadmapHistoryResponse
 )
 
 import google.generativeai as genai
@@ -36,12 +37,23 @@ if settings.GEMINI_API_KEY:
 # SkillBridge AI external ATS API endpoint
 SKILLBRIDGE_ATS_URL = os.environ.get(
     "SKILLBRIDGE_ATS_URL",
-    "https://skillbridge-ai.onrender.com"
+    "https://skillbridge-ai-7m05.onrender.com"
 )
 
 router = APIRouter()
 
 
+# ── Request Schemas ───────────────────────────────────────────
+class AnalyzeRequest(BaseModel):
+    resume_id: int
+    job_description: Optional[str] = ""
+
+
+class ImproveRequest(BaseModel):
+    resume_id: int
+
+
+# ── Helper functions ──────────────────────────────────────────
 def _call_gemini(prompt: str) -> str:
     """Calls Gemini 1.5 Flash and returns the response text."""
     if GEMINI_AVAILABLE:
@@ -54,28 +66,21 @@ def _call_gemini(prompt: str) -> str:
     return ""
 
 
-def _call_skillbridge_ats(resume_text: str, job_description: str = "") -> Dict[str, Any]:
-    """
-    Calls the deployed SkillBridge AI ATS service.
-    Falls back to Gemini-powered mock analysis if unreachable.
-    """
+def _call_gemini_fallback(file_bytes: bytes, file_name: str, job_description: str = "") -> Dict[str, Any]:
+    """Generates a structured ATS analysis using Gemini as a first fallback layer."""
     try:
-        response = httpx.post(
-            f"{SKILLBRIDGE_ATS_URL}/analyze",
-            json={"resume_text": resume_text, "job_description": job_description},
-            timeout=30.0
-        )
-        if response.status_code == 200:
-            return response.json()
-    except Exception as e:
-        print(f"[SkillBridge ATS] Service unreachable: {e}. Using AI fallback.")
+        resume_text = file_bytes.decode("utf-8", errors="ignore")
+    except Exception:
+        resume_text = ""
+    if len(resume_text.strip()) < 50:
+        resume_text = f"Engineering student resume: {file_name}. Skills: Python, Java, React, SQL, Git, DSA, Algorithms, OOPs."
 
-    # Gemini fallback: generate structured ATS analysis
     if GEMINI_AVAILABLE:
         try:
             model = genai.GenerativeModel("gemini-1.5-flash")
             prompt = (
-                f"Analyze this resume for ATS compatibility:\n\n{resume_text[:3000]}\n\n"
+                f"Analyze this engineering resume for ATS compatibility against target job description: {job_description}\n\n"
+                f"Resume Content:\n{resume_text[:3000]}\n\n"
                 f"Return a JSON object with these fields:\n"
                 f"- ats_score: float (0-100)\n"
                 f"- resume_strength: string (Weak/Average/Strong/Excellent)\n"
@@ -94,7 +99,7 @@ def _call_skillbridge_ats(resume_text: str, job_description: str = "") -> Dict[s
         except Exception as e:
             print(f"[Gemini ATS Fallback Error] {e}")
 
-    # Static mock fallback
+    # Cached Static Mock Fallover
     return {
         "ats_score": 62.0,
         "resume_strength": "Average",
@@ -106,6 +111,58 @@ def _call_skillbridge_ats(resume_text: str, job_description: str = "") -> Dict[s
         "keyword_match_percent": 55.0,
         "overall_feedback": "Your resume has a solid foundation but needs stronger action verbs, quantified results, and industry-specific keywords to pass automated ATS filters."
     }
+
+
+def _call_skillbridge_ats(file_bytes: bytes, file_name: str, content_type: str, job_description: str = "") -> Dict[str, Any]:
+    """
+    Calls the deployed SkillBridge AI ATS service.
+    Falls back to Gemini AI, and then to a cached mock response.
+    """
+    try:
+        # Step 1: Upload the file to SkillBridge
+        files = {"resume": (file_name, file_bytes, content_type)}
+        data = {"userId": "pathfinder_student", "fileName": file_name}
+        
+        upload_resp = httpx.post(
+            f"{SKILLBRIDGE_ATS_URL}/api/resumes/upload",
+            files=files,
+            data=data,
+            timeout=30.0
+        )
+        if upload_resp.status_code == 200:
+            res_data = upload_resp.json()
+            resume_id = res_data.get("id")
+            
+            # Step 2: Request ATS analysis against the job description
+            ats_resp = httpx.post(
+                f"{SKILLBRIDGE_ATS_URL}/api/analysis/ats-score",
+                json={
+                    "resumeId": resume_id,
+                    "jobDescription": job_description or "General Software Engineering Role",
+                    "userId": "pathfinder_student"
+                },
+                timeout=30.0
+            )
+            if ats_resp.status_code == 200:
+                ats_data = ats_resp.json()
+                # Map SkillBridge's schema to PathFinder's expected schema
+                return {
+                    "ats_score": ats_data.get("score", 65.0),
+                    "resume_strength": "Excellent" if ats_data.get("score", 65.0) >= 80 else ("Strong" if ats_data.get("score", 65.0) >= 60 else "Average"),
+                    "strengths": ats_data.get("strengths", []),
+                    "weaknesses": [imp.get("text") for imp in ats_data.get("improvements", []) if isinstance(imp, dict)] if ats_data.get("improvements") else ["Lacks detailed metrics"],
+                    "missing_keywords": ats_data.get("missingKeywords", []),
+                    "formatting_issues": ["Formatting issues score: " + str(ats_data.get("breakdown", {}).get("formatting", 15))],
+                    "grammar_score": ats_data.get("breakdown", {}).get("contactInfo", 8) * 10,
+                    "keyword_match_percent": ats_data.get("score", 65.0),
+                    "overall_feedback": ats_data.get("verdict", ""),
+                    "skillbridge_resume_id": resume_id
+                }
+    except Exception as e:
+        print(f"[SkillBridge Microservice] Connection or processing error: {e}. Falling back to local AI.")
+
+    # Fallback to local Gemini parser and calculator
+    return _call_gemini_fallback(file_bytes, file_name, job_description)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -143,6 +200,7 @@ def get_career_dashboard(
     )
 
 
+@router.post("/upload")
 @router.post("/upload-resume")
 async def upload_resume(
     file: UploadFile = File(...),
@@ -163,21 +221,21 @@ async def upload_resume(
     file_bytes = await file.read()
     file_name = file.filename or "resume.pdf"
 
-    # Extract text (naive approach - in production use PyPDF2/python-docx)
+    # Extract text (naive approach)
     try:
         resume_text = file_bytes.decode("utf-8", errors="ignore")
     except Exception:
         resume_text = f"Resume file: {file_name} (binary content)"
 
-    # If text too short, use filename for context
     if len(resume_text.strip()) < 50:
-        resume_text = f"Engineering student resume: {file_name}. Skills: Python, Java, React, Machine Learning, Data Structures, Algorithms, DBMS, Computer Networks."
+        resume_text = f"Engineering student resume: {file_name}. Skills: Python, Java, React, Machine Learning, Data Structures, Algorithms, DBMS."
 
     # --- Step 1: Call SkillBridge AI ATS Engine ---
-    ats_result = _call_skillbridge_ats(resume_text, job_description)
+    ats_result = _call_skillbridge_ats(file_bytes, file_name, file.content_type or "application/pdf", job_description)
 
     ats_score = float(ats_result.get("ats_score", 60.0))
     resume_strength = ats_result.get("resume_strength", "Average")
+    sb_id = ats_result.get("skillbridge_resume_id")
 
     # --- Step 2: Store Resume Analysis ---
     analysis = ResumeAnalysis(
@@ -186,6 +244,7 @@ async def upload_resume(
         ats_score=ats_score,
         resume_strength=resume_strength,
         parsed_text=resume_text[:5000],  # Store first 5000 chars
+        resume_url=sb_id  # Save SkillBridge's Firestore Resume ID in resume_url
     )
     db.add(analysis)
     db.commit()
@@ -272,61 +331,141 @@ async def upload_resume(
     }
 
 
-@router.get("/history", response_model=List[ResumeHistoryResponse])
-def get_resume_history(
+@router.post("/analyze")
+def analyze_resume(
+    data: AnalyzeRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Returns all previous ATS resume submissions for the current student."""
-    return db.query(ResumeHistory).filter(
-        ResumeHistory.user_id == current_user.id
-    ).order_by(ResumeHistory.uploaded_at.desc()).all()
-
-
-@router.get("/analysis/{analysis_id}")
-def get_analysis_detail(
-    analysis_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Returns detailed ATS analysis and Gemini-generated feedback for a resume."""
+    """
+    Accepts a resume_id and an optional job_description, calls SkillBridge ATS
+    service (or fallbacks) and saves the analysis feedback in the database.
+    """
     analysis = db.query(ResumeAnalysis).filter(
-        ResumeAnalysis.id == analysis_id,
+        ResumeAnalysis.id == data.resume_id,
         ResumeAnalysis.user_id == current_user.id
     ).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Resume analysis record not found")
 
+    # If the SkillBridge resume ID is saved, use it. Otherwise, perform a quick sync.
+    sb_id = analysis.resume_url
+    ats_result = {}
+    try:
+        if sb_id:
+            ats_resp = httpx.post(
+                f"{SKILLBRIDGE_ATS_URL}/api/analysis/ats-score",
+                json={
+                    "resumeId": sb_id,
+                    "jobDescription": data.job_description or "General Software Engineering Role",
+                    "userId": "pathfinder_student"
+                },
+                timeout=30.0
+            )
+            if ats_resp.status_code == 200:
+                ats_data = ats_resp.json()
+                ats_result = {
+                    "ats_score": ats_data.get("score", 65.0),
+                    "resume_strength": "Excellent" if ats_data.get("score", 65.0) >= 80 else ("Strong" if ats_data.get("score", 65.0) >= 60 else "Average"),
+                    "strengths": ats_data.get("strengths", []),
+                    "weaknesses": [imp.get("text") for imp in ats_data.get("improvements", [])] if ats_data.get("improvements") else ["Lacks detailed metrics"],
+                    "missing_keywords": ats_data.get("missingKeywords", []),
+                    "formatting_issues": ["Formatting issues score: " + str(ats_data.get("breakdown", {}).get("formatting", 15))],
+                    "grammar_score": ats_data.get("breakdown", {}).get("contactInfo", 8) * 10,
+                    "keyword_match_percent": ats_data.get("score", 65.0),
+                    "overall_feedback": ats_data.get("verdict", "")
+                }
+        else:
+            # Re-upload/simulate
+            file_bytes = (analysis.parsed_text or "").encode("utf-8")
+            ats_result = _call_skillbridge_ats(file_bytes, analysis.file_name, "text/plain", data.job_description)
+    except Exception as e:
+        print(f"[SkillBridge ATS Analyze Error] {e}. Using AI fallback.")
+        file_bytes = (analysis.parsed_text or "").encode("utf-8")
+        ats_result = _call_gemini_fallback(file_bytes, analysis.file_name, data.job_description or "")
+
+    # Save to database
+    feedback = db.query(ATSFeedback).filter(ATSFeedback.analysis_id == analysis.id).first()
+    if not feedback:
+        feedback = ATSFeedback(analysis_id=analysis.id)
+        db.add(feedback)
+
+    feedback.strengths = json.dumps(ats_result.get("strengths", []))
+    feedback.weaknesses = json.dumps(ats_result.get("weaknesses", []))
+    feedback.missing_keywords = json.dumps(ats_result.get("missing_keywords", []))
+    feedback.formatting_issues = json.dumps(ats_result.get("formatting_issues", []))
+    feedback.grammar_score = float(ats_result.get("grammar_score", 70.0))
+    feedback.keyword_match_percent = float(ats_result.get("keyword_match_percent", 50.0))
+    feedback.overall_feedback = ats_result.get("overall_feedback", "")
+    db.commit()
+
+    return {
+        "success": True,
+        "ats_score": ats_result.get("ats_score", 60.0),
+        "resume_strength": ats_result.get("resume_strength", "Average"),
+        "strengths": ats_result.get("strengths", []),
+        "weaknesses": ats_result.get("weaknesses", []),
+        "missing_keywords": ats_result.get("missing_keywords", []),
+        "formatting_issues": ats_result.get("formatting_issues", []),
+        "grammar_score": ats_result.get("grammar_score", 75.0),
+        "keyword_match_percent": ats_result.get("keyword_match_percent", 50.0),
+        "overall_feedback": ats_result.get("overall_feedback", "")
+    }
+
+
+@router.post("/improve")
+def improve_resume(
+    data: ImproveRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Uses Gemini to suggest improvements for Professional Summary, Achievements, Projects, and Skills."""
+    analysis = db.query(ResumeAnalysis).filter(
+        ResumeAnalysis.id == data.resume_id,
+        ResumeAnalysis.user_id == current_user.id
+    ).first()
     if not analysis:
         raise HTTPException(status_code=404, detail="Resume analysis not found")
 
-    feedback = db.query(ATSFeedback).filter(ATSFeedback.analysis_id == analysis_id).first()
+    prompt = (
+        f"Analyze and improve this resume text for a university student. Make it compelling, metric-driven, and technical:\n\n"
+        f"Resume text:\n{analysis.parsed_text}\n\n"
+        f"Structure your response to return a valid JSON object with the following fields:\n"
+        f"- summary: an improved, powerful 2-sentence professional summary\n"
+        f"- achievements: list of 3 improved bullet points using active language and metrics\n"
+        f"- projects: list of 2 improved project descriptions with quantified outcomes\n"
+        f"- skills: list of 10 key technical skills organized into a clean array\n"
+        f"- experience: list of 2 improved work experience descriptions (or internships)\n"
+        f"- grammar_fixes: list of 3 grammar corrections or phrasing adjustments\n"
+        f"- improved_resume_markdown: a clean, formatted Markdown representing the newly redesigned resume ready for download\n\n"
+        f"Return ONLY valid raw JSON."
+    )
 
-    result = {
-        "analysis": {
-            "id": analysis.id,
-            "file_name": analysis.file_name,
-            "ats_score": analysis.ats_score,
-            "resume_strength": analysis.resume_strength,
-            "uploaded_at": analysis.uploaded_at.isoformat()
+    res_raw = _call_gemini(prompt)
+    try:
+        cleaned = res_raw.replace("```json", "").replace("```", "").strip()
+        return json.loads(cleaned)
+    except Exception:
+        # Failover response
+        return {
+            "summary": "High-performing Engineering student with hands-on experience in full-stack web architectures and relational databases.",
+            "achievements": [
+                "Optimized backend REST API query latency by 35% using database index tuning.",
+                "Won Department Hackathon out of 40 teams by building a responsive emergency app."
+            ],
+            "projects": [
+                "E-Learning Portal: Constructed React frontend and FastAPI backend, reducing load time by 1.2s."
+            ],
+            "skills": ["Python", "JavaScript", "TypeScript", "FastAPI", "React", "SQL", "Git", "Docker"],
+            "experience": [
+                "Junior Developer Intern: Implemented secure OAuth2 authentication flow and built 15+ reusable React components."
+            ],
+            "grammar_fixes": ["Replaced 'responsible for coding' with 'Engineered and shipped modular code bases'"],
+            "improved_resume_markdown": f"# {current_user.full_name}\n\n## Professional Summary\nHigh-performing Engineering student with hands-on experience in full-stack web architectures.\n\n## Technical Skills\nPython, JavaScript, TypeScript, FastAPI, React, SQL, Git, Docker\n"
         }
-    }
-
-    if feedback:
-        result["feedback"] = {
-            "strengths": json.loads(feedback.strengths or "[]"),
-            "weaknesses": json.loads(feedback.weaknesses or "[]"),
-            "missing_keywords": json.loads(feedback.missing_keywords or "[]"),
-            "formatting_issues": json.loads(feedback.formatting_issues or "[]"),
-            "grammar_score": feedback.grammar_score,
-            "keyword_match_percent": feedback.keyword_match_percent,
-            "overall_feedback": feedback.overall_feedback,
-            "improvement_tips": json.loads(feedback.improvement_tips or "[]"),
-            "recommended_certs": json.loads(feedback.recommended_certs or "[]"),
-            "recommended_projects": json.loads(feedback.recommended_projects or "[]"),
-        }
-
-    return result
 
 
+@router.post("/roadmap")
 @router.post("/generate-roadmap")
 def generate_career_roadmap(
     data: GenerateRoadmapRequest,
@@ -381,14 +520,26 @@ def generate_career_roadmap(
         roadmap_text=result.get("roadmap_text", "")
     )
     db.add(suggestion)
+
+    # Save to RoadmapHistory
+    roadmap_hist = RoadmapHistory(
+        user_id=current_user.id,
+        target_role=data.target_role,
+        branch=data.branch,
+        semester=data.semester,
+        roadmap_text=result.get("roadmap_text", "")
+    )
+    db.add(roadmap_hist)
     db.commit()
 
     return result
 
 
+@router.post("/interview")
 @router.post("/interview-preparation")
 def generate_interview_questions(
     data: InterviewPrepRequest,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Generates interview questions using Gemini based on role and interview type."""
@@ -413,24 +564,84 @@ def generate_interview_questions(
     )
 
     result_raw = _call_gemini(prompt)
+    result = {}
     try:
         cleaned = result_raw.replace("```json", "").replace("```", "").strip()
-        return json.loads(cleaned)
+        result = json.loads(cleaned)
     except Exception:
-        pass
+        result = {
+            "questions": [
+                {"question": f"Explain the responsibilities of a {data.target_role}.", "category": "HR", "expected_answer": "Discuss core competencies and project deliverables.", "difficulty": "Easy"},
+                {"question": "What is the difference between a stack and a queue?", "category": "Technical", "expected_answer": "Stack is LIFO, Queue is FIFO.", "difficulty": "Easy"},
+                {"question": "Design a URL shortening service.", "category": "System Design", "expected_answer": "Discuss hashing, SQL vs NoSQL, caching.", "difficulty": "Hard"},
+                {"question": "Implement binary search.", "category": "Coding", "expected_answer": "Use left and right pointers iteratively to search in a sorted array.", "difficulty": "Medium"}
+            ]
+        }
 
-    # Fallback questions
-    return {
-        "questions": [
-            {"question": f"Explain the key responsibilities of a {data.target_role}.", "category": "HR", "expected_answer": "Discuss role-specific skills and project experience.", "difficulty": "Easy"},
-            {"question": "What is the difference between a stack and a queue?", "category": "Technical", "expected_answer": "Stack is LIFO, Queue is FIFO. Both are linear data structures.", "difficulty": "Easy"},
-            {"question": "Design a URL shortening service like bit.ly.", "category": "System Design", "expected_answer": "Discuss hash functions, database schema, caching, and scaling.", "difficulty": "Hard"},
-            {"question": "Implement binary search in Python.", "category": "Coding", "expected_answer": "def binary_search(arr, target): l, r = 0, len(arr)-1...", "difficulty": "Medium"},
-            {"question": "Tell me about a challenging project you've worked on.", "category": "HR", "expected_answer": "Use STAR method: Situation, Task, Action, Result.", "difficulty": "Medium"},
-            {"question": "What is the time complexity of QuickSort?", "category": "Technical", "expected_answer": "Average O(n log n), Worst case O(n²).", "difficulty": "Medium"},
-            {"question": "How does garbage collection work in Python?", "category": "Technical", "expected_answer": "Python uses reference counting and a cyclic garbage collector.", "difficulty": "Medium"},
-            {"question": "Write a function to reverse a linked list.", "category": "Coding", "expected_answer": "Use three pointers: prev, curr, next_node iteratively.", "difficulty": "Medium"},
-            {"question": "Where do you see yourself in 5 years?", "category": "HR", "expected_answer": "Align answer with company growth and technical leadership.", "difficulty": "Easy"},
-            {"question": "Explain CAP theorem in distributed systems.", "category": "System Design", "expected_answer": "Consistency, Availability, Partition Tolerance — choose 2.", "difficulty": "Hard"}
-        ]
+    # Save to InterviewHistory
+    interview_hist = InterviewHistory(
+        user_id=current_user.id,
+        target_role=data.target_role,
+        interview_type=data.interview_type,
+        difficulty=data.difficulty,
+        questions_json=json.dumps(result.get("questions", []))
+    )
+    db.add(interview_hist)
+    db.commit()
+
+    return result
+
+
+@router.get("/history", response_model=List[ResumeHistoryResponse])
+def get_resume_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Returns all previous ATS resume submissions for the current student."""
+    return db.query(ResumeHistory).filter(
+        ResumeHistory.user_id == current_user.id
+    ).order_by(ResumeHistory.uploaded_at.desc()).all()
+
+
+@router.get("/analysis/{analysis_id}")
+def get_analysis_detail(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Returns detailed ATS analysis and Gemini-generated feedback for a resume."""
+    analysis = db.query(ResumeAnalysis).filter(
+        ResumeAnalysis.id == analysis_id,
+        ResumeAnalysis.user_id == current_user.id
+    ).first()
+
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Resume analysis not found")
+
+    feedback = db.query(ATSFeedback).filter(ATSFeedback.analysis_id == analysis_id).first()
+
+    result = {
+        "analysis": {
+            "id": analysis.id,
+            "file_name": analysis.file_name,
+            "ats_score": analysis.ats_score,
+            "resume_strength": analysis.resume_strength,
+            "uploaded_at": analysis.uploaded_at.isoformat()
+        }
     }
+
+    if feedback:
+        result["feedback"] = {
+            "strengths": json.loads(feedback.strengths or "[]"),
+            "weaknesses": json.loads(feedback.weaknesses or "[]"),
+            "missing_keywords": json.loads(feedback.missing_keywords or "[]"),
+            "formatting_issues": json.loads(feedback.formatting_issues or "[]"),
+            "grammar_score": feedback.grammar_score,
+            "keyword_match_percent": feedback.keyword_match_percent,
+            "overall_feedback": feedback.overall_feedback,
+            "improvement_tips": json.loads(feedback.improvement_tips or "[]"),
+            "recommended_certs": json.loads(feedback.recommended_certs or "[]"),
+            "recommended_projects": json.loads(feedback.recommended_projects or "[]"),
+        }
+
+    return result

@@ -64,3 +64,29 @@ class ResumeHistory(Base):
 
     user = orm_relationship("User")
     analysis = orm_relationship("ResumeAnalysis")
+
+
+class InterviewHistory(Base):
+    __tablename__ = "interview_histories"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    target_role = Column(String, nullable=False)
+    interview_type = Column(String, nullable=False)
+    difficulty = Column(String, nullable=False)
+    questions_json = Column(Text, nullable=True)  # JSON representation of generated questions
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = orm_relationship("User")
+
+
+class RoadmapHistory(Base):
+    __tablename__ = "roadmap_histories"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    target_role = Column(String, nullable=False)
+    branch = Column(String, nullable=True)
+    semester = Column(Integer, nullable=True)
+    roadmap_text = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = orm_relationship("User")

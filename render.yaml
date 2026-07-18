@@ -1,64 +1,115 @@
 # ============================================================
-# PathFinder AI — Render Blueprint
-# Deploys: Backend (Web Service) + PostgreSQL Database
-# Frontend: Deploy separately as a Render Static Site
+# PathFinder AI — Render Blueprint (Single Web Service)
+# ONE service serves both FastAPI backend + React frontend
+# ONE PostgreSQL database
+# ONE URL: https://pathfinder-ai.onrender.com
 # ============================================================
 
 services:
-  # ── Backend Web Service ─────────────────────────────────────
+  # ── Single Web Service ──────────────────────────────────────────────────
   - type: web
-    name: pathfinder-backend
+    name: pathfinder-ai
     runtime: python
-    region: singapore          # Change to: oregon, frankfurt, ohio as needed
-    plan: free                 # Upgrade to starter ($7/mo) for always-on
+    region: singapore         # Options: oregon, frankfurt, ohio, singapore
 
-    # Root directory (where run.py lives)
+    plan: free                # Upgrade to starter ($7/mo) for always-on uptime
+
+    # Root directory — repo root contains both backend/ and frontend/
     rootDir: .
 
-    # Build: install Python dependencies
-    buildCommand: pip install -r backend/requirements.txt
+    # Build: Install Node → Build React → Install Python
+    buildCommand: chmod +x build.sh && ./build.sh
 
-    # Start: run the FastAPI server via run.py
-    startCommand: python run.py
+    # Start: FastAPI serves API + React static files on Render's assigned PORT
+    startCommand: >-
+      cd backend &&
+      python -m uvicorn app.main:app
+      --host 0.0.0.0
+      --port ${PORT:-10000}
+      --workers 2
+      --proxy-headers
+      --forwarded-allow-ips=*
+      --log-level info
 
-    # Health check path (FastAPI root returns 200)
-    healthCheckPath: /
+    # Health check — FastAPI /health endpoint returns 200
+    healthCheckPath: /health
+
+    # Auto-deploy on push to main branch
+    autoDeploy: true
 
     envVars:
-      # ── Required: Auto-generated ───────────────────────────
-      - key: SECRET_KEY
-        generateValue: true
-
-      # ── Required: Linked to internal Render PostgreSQL ─────
+      # ── Database — Auto-linked from Render PostgreSQL ───────────────────
       - key: DATABASE_URL
         fromDatabase:
           name: pathfinder-db
           property: connectionString
 
-      # ── Required: Set manually in Render dashboard ─────────
+      # ── Security ────────────────────────────────────────────────────────
+      - key: SECRET_KEY
+        generateValue: true    # Render generates a secure random value
+
+      # ── AI — Must be set manually in Render dashboard ───────────────────
       - key: GEMINI_API_KEY
-        sync: false             # Must be added manually in Render environment tab
+        sync: false            # Go to Render dashboard → Environment → Add manually
 
-      # ── Required: Your deployed Render frontend URL ─────────
-      - key: CORS_ORIGINS
-        sync: false             # Set to: https://pathfinder-frontend.onrender.com
-
-      # ── Optional: SkillBridge AI ATS microservice ──────────
+      # ── SkillBridge AI ATS (optional — has Gemini fallback) ─────────────
       - key: SKILLBRIDGE_ATS_URL
         value: "https://skillbridge-ai.onrender.com"
 
-      # ── Internal flags ─────────────────────────────────────
+      # ── CORS & Allowed Hosts ────────────────────────────────────────────
+      - key: CORS_ORIGINS
+        value: "*"
+
+      - key: ALLOWED_HOSTS
+        value: "*"
+
+      # ── Firebase Admin SDK (Backend) ────────────────────────────────────
+      - key: FIREBASE_PROJECT_ID
+        value: "pathfinder-ai-project"
+
+      - key: FIREBASE_CLIENT_EMAIL
+        value: "firebase-adminsdk@pathfinder-ai-project.iam.gserviceaccount.com"
+
+      - key: FIREBASE_PRIVATE_KEY
+        value: "optional_private_key_placeholder"
+
+      # ── Firebase Client SDK (Frontend) ──────────────────────────────────
+      - key: VITE_FIREBASE_API_KEY
+        value: "AIzaSyBptGdIbxGonIxzS8O0OuP_fIdAeRoszkE"
+
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        value: "pathfinder-ai-project.firebaseapp.com"
+
+      - key: VITE_FIREBASE_PROJECT_ID
+        value: "pathfinder-ai-project"
+
+      - key: VITE_FIREBASE_STORAGE_BUCKET
+        value: "pathfinder-ai-project.firebasestorage.app"
+
+      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
+        value: "643456407704"
+
+      - key: VITE_FIREBASE_APP_ID
+        value: "1:643456407704:web:9311802e80ca4e050d98ed"
+
+      - key: VITE_FIREBASE_MEASUREMENT_ID
+        value: "G-ZJRCBE91MS"
+
+      # ── Runtime flags ────────────────────────────────────────────────────
       - key: PRODUCTION
         value: "true"
-      - key: RENDER
-        value: "true"
-      - key: PORT
-        value: "10000"          # Render assigns its own port; this is the fallback
 
-  # ── PostgreSQL Database ─────────────────────────────────────
+      - key: PORT
+        value: "10000"         # Render overrides this with its own assigned port
+
+      # ── Python path ─────────────────────────────────────────────────────
+      - key: PYTHONPATH
+        value: "backend"
+
+# ── PostgreSQL Database ─────────────────────────────────────────────────
 databases:
   - name: pathfinder-db
     databaseName: pathfinder
     user: pathfinder_user
-    plan: free                  # Free tier: 1GB storage, 90-day limit
-    region: singapore           # Must match backend region
+    plan: free                 # Free: 1GB, 90-day expiry; upgrade for production
+    region: singapore          # Must match the web service region

@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "PathFinder AI - Personalized Learning Platform",
   "scripts": {
-    "postinstall": "pip install -r backend/requirements.txt",
-    "build": "pip install -r backend/requirements.txt",
+    "install:frontend": "npm --prefix frontend install --legacy-peer-deps",
+    "build:frontend": "npm --prefix frontend run build",
+    "install:backend": "pip install -r backend/requirements.txt",
+    "build": "npm run install:frontend && npm run build:frontend && npm run install:backend",
     "dev": "python run.py",
     "start": "python run.py"
   },
