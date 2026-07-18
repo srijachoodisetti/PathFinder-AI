@@ -32,10 +32,10 @@ def build_frontend():
                        shell=IS_WINDOWS)
         subprocess.run(["npm", "run", "build"], cwd=str(FRONTEND_DIR), check=True,
                        shell=IS_WINDOWS)
-        print("[PathFinder] ✓ Frontend built successfully.")
+        print("[PathFinder] [OK] Frontend built successfully.")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"[PathFinder] ⚠ Frontend build failed: {e}")
+        print(f"[PathFinder] [WARNING] Frontend build failed: {e}")
         print("[PathFinder] Continuing without frontend (API-only mode).")
         return False
 
@@ -64,7 +64,7 @@ def setup_venv():
 
 
 def main():
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.getenv("PORT", 8000))
     host = "0.0.0.0"
 
     print("=" * 50)
@@ -117,9 +117,9 @@ def main():
             print("[PathFinder] uvicorn not found. Run: pip install -r backend/requirements.txt")
             sys.exit(1)
 
-        print(f"[PathFinder] ✓ Starting dev server at http://localhost:{port}")
-        print(f"[PathFinder] ✓ API Docs: http://localhost:{port}/api/v1/docs")
-        print(f"[PathFinder] ✓ Frontend: http://localhost:5173 (run npm run dev separately)")
+        print(f"[PathFinder] [OK] Starting dev server at http://localhost:{port}")
+        print(f"[PathFinder] [OK] API Docs: http://localhost:{port}/api/v1/docs")
+        print(f"[PathFinder] [OK] Frontend: http://localhost:5173 (run npm run dev separately)")
         print()
 
         uvicorn.run(

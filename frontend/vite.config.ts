@@ -7,6 +7,7 @@ export default defineConfig({
 
   build: {
     outDir: 'dist',
+    emptyOutDir: true,
     sourcemap: false,          // Disable sourcemaps in production for security
     minify: 'esbuild',         // Fastest minifier
     target: 'es2020',

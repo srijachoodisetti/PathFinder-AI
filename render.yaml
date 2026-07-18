@@ -17,19 +17,11 @@ services:
     # Root directory — repo root contains both backend/ and frontend/
     rootDir: .
 
-    # Build: Install Node → Build React → Install Python
-    buildCommand: chmod +x build.sh && ./build.sh
+    # Build: Install Python dependencies, install Node, and build frontend
+    buildCommand: pip install -r backend/requirements.txt && cd frontend && npm install && npm run build
 
-    # Start: FastAPI serves API + React static files on Render's assigned PORT
-    startCommand: >-
-      cd backend &&
-      python -m uvicorn app.main:app
-      --host 0.0.0.0
-      --port ${PORT:-10000}
-      --workers 2
-      --proxy-headers
-      --forwarded-allow-ips=*
-      --log-level info
+    # Start: Run the unified start script which hosts uvicorn
+    startCommand: python run.py
 
     # Health check — FastAPI /health endpoint returns 200
     healthCheckPath: /health

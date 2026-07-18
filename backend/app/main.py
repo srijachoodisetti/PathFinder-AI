@@ -39,7 +39,7 @@ logger = logging.getLogger("pathfinder")
 # ── Static files path (React build output) ────────────────────────────────
 # When running from repo root (production/Render): frontend/dist
 # When running from backend/ (local uvicorn): ../frontend/dist
-_HERE = Path(__file__).parent.parent  # backend/
+_HERE = Path(__file__).resolve().parent.parent  # backend/
 _FRONTEND_DIST = _HERE.parent / "frontend" / "dist"
 
 

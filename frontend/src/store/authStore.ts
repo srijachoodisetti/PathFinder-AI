@@ -12,27 +12,7 @@ import { auth, analytics } from '../lib/firebase';
 import { logEvent } from 'firebase/analytics';
 import { firestoreService } from '../services/firestoreService';
 
-// Auto-detect API URL:
-// - If VITE_API_URL is explicitly set (e.g. separate Render services), use it.
-// - In production (same-domain single service), use the current window origin.
-// - In local development, fall back to localhost:8000.
-function detectApiUrl(): string {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (typeof window !== 'undefined') {
-    const { protocol, hostname, port } = window.location;
-    // If running on localhost dev ports (5173, 3000), point to backend at :8000
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}:8000/api/v1`;
-    }
-    // Production / Render — same domain, FastAPI serves everything
-    return `${protocol}//${hostname}${port ? ':' + port : ''}/api/v1`;
-  }
-  return 'http://localhost:8000/api/v1';
-}
-
-export const API_URL = detectApiUrl();
+export const API_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 // Set up Axios default authorization from localStorage if exists
 const savedToken = localStorage.getItem('token');
