@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_URL } from '../store/authStore';
 import { ClayCard, ClayButton, ClayInput, ClayAlert } from '../components/ui';
 import { ArrowLeft, Send } from 'lucide-react';
+import { auth } from '../lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 export const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -20,11 +20,10 @@ export const ForgotPassword: React.FC = () => {
     setError(null);
     setMessage(null);
     try {
-      // Backend password reset email (FastAPI sends the reset email)
-      await axios.post(`${API_URL}/auth/forgot-password`, { email });
+      await sendPasswordResetEmail(auth, email);
       setMessage("Password reset instructions have been sent to your email!");
     } catch (err: any) {
-      const errorMsg = err.response?.data?.detail || "Something went wrong. Please try again.";
+      const errorMsg = err.message || "Something went wrong. Please try again.";
       setError(errorMsg);
     } finally {
       setLoading(false);

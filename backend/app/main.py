@@ -52,7 +52,7 @@ def _seed_database():
 
             admin_user = User(
                 email="admin@pathfinder.com",
-                hashed_password=get_password_hash("admin123"),
+                uid="test_uid_admin",
                 full_name="PathFinder Admin",
                 role="admin",
             )
@@ -60,7 +60,7 @@ def _seed_database():
 
             student_user = User(
                 email="student@pathfinder.com",
-                hashed_password=get_password_hash("student123"),
+                uid="test_uid_student",
                 full_name="Student User",
                 role="student",
             )
@@ -80,7 +80,7 @@ def _seed_database():
 
             teacher_user = User(
                 email="teacher@pathfinder.com",
-                hashed_password=get_password_hash("teacher123"),
+                uid="test_uid_teacher",
                 full_name="Teacher User",
                 role="teacher",
             )
@@ -97,7 +97,7 @@ def _seed_database():
 
             parent_user = User(
                 email="parent@pathfinder.com",
-                hashed_password=get_password_hash("parent123"),
+                uid="test_uid_parent",
                 full_name="Parent User",
                 role="parent",
             )
@@ -184,6 +184,8 @@ def _seed_database():
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("PathFinder AI starting up...")
+    from app.core.firebase import get_firebase_app
+    get_firebase_app()
     Base.metadata.create_all(bind=engine)
     _seed_database()
     logger.info(f"Frontend dist exists: {_FRONTEND_DIST.exists()} ({_FRONTEND_DIST})")

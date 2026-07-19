@@ -101,14 +101,6 @@ const AdminRoute: React.FC = () => {
 };
 
 function App() {
-  const { refreshMe, setInitializing } = useAuthStore();
-
-  useEffect(() => {
-    // Kick off token validation. isInitializing stays true until this resolves,
-    // preventing any protected (or public-only) page from rendering prematurely.
-    refreshMe().finally(() => setInitializing(false));
-  }, []);
-
   return (
     <BrowserRouter>
       <Suspense fallback={<AuthLoadingScreen />}>

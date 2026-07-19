@@ -8,20 +8,18 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
     role = Column(String, nullable=False)  # student, teacher, parent, admin
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    # New fields
-    uid = Column(String, unique=True, index=True, nullable=True) # Firebase UID
+    # Firebase UID
+    uid = Column(String, unique=True, index=True, nullable=True)
     phone = Column(String, nullable=True)
     university = Column(String, nullable=True)
     department = Column(String, nullable=True)
     semester = Column(String, nullable=True)
     year = Column(String, nullable=True)
-    google_provider = Column(Boolean, default=False)
     profile_photo = Column(String, nullable=True)
     last_login = Column(DateTime, nullable=True)
 

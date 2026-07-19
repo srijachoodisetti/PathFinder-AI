@@ -42,7 +42,7 @@ try:
         # Admin User
         admin_user = User(
             email="admin@pathfinder.com",
-            hashed_password=get_password_hash("admin123"),
+            uid="test_uid_admin",
             full_name="PathFinder Admin",
             role="admin"
         )
@@ -51,7 +51,7 @@ try:
         # Student User
         student_user = User(
             email="student@pathfinder.com",
-            hashed_password=get_password_hash("student123"),
+            uid="test_uid_student",
             full_name="Student User",
             role="student"
         )
@@ -72,7 +72,7 @@ try:
         # Teacher User
         teacher_user = User(
             email="teacher@pathfinder.com",
-            hashed_password=get_password_hash("teacher123"),
+            uid="test_uid_teacher",
             full_name="Teacher User",
             role="teacher"
         )
@@ -89,7 +89,7 @@ try:
         # Parent User
         parent_user = User(
             email="parent@pathfinder.com",
-            hashed_password=get_password_hash("parent123"),
+            uid="test_uid_parent",
             full_name="Parent User",
             role="parent"
         )
