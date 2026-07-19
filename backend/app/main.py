@@ -61,7 +61,7 @@ def _seed_database():
             student_user = User(
                 email="student@pathfinder.com",
                 hashed_password=get_password_hash("student123"),
-                full_name="Rajesh Kumar",
+                full_name="Student User",
                 role="student",
             )
             db.add(student_user)
@@ -81,7 +81,7 @@ def _seed_database():
             teacher_user = User(
                 email="teacher@pathfinder.com",
                 hashed_password=get_password_hash("teacher123"),
-                full_name="Savitri Devi",
+                full_name="Teacher User",
                 role="teacher",
             )
             db.add(teacher_user)
@@ -98,7 +98,7 @@ def _seed_database():
             parent_user = User(
                 email="parent@pathfinder.com",
                 hashed_password=get_password_hash("parent123"),
-                full_name="Ramesh Kumar",
+                full_name="Parent User",
                 role="parent",
             )
             db.add(parent_user)

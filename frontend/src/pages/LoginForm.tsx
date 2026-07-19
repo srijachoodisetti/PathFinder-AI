@@ -88,7 +88,7 @@ export const LoginForm: React.FC = () => {
             <input
               id="email"
               type="email"
-              placeholder="e.g. name@domain.com"
+              placeholder="Your Email Address"
               {...register('email')}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? "email-error" : undefined}
@@ -121,7 +121,7 @@ export const LoginForm: React.FC = () => {
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter password"
+              placeholder="Enter Your Password"
               {...register('password')}
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "password-error" : undefined}

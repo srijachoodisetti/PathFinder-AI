@@ -120,7 +120,7 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
         <div className="hidden md:flex items-center relative max-w-xs w-full mx-4">
           <input
             type="text"
-            placeholder="Search courses, exams..."
+            placeholder="Search..."
             className="w-full pl-10 pr-4 py-2 text-xs font-semibold bg-slate-50 border border-slate-100 rounded-xl outline-none focus:bg-white focus:border-primary transition-all"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {

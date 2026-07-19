@@ -55,7 +55,7 @@ export const ForgotPassword: React.FC = () => {
           <ClayCard className="flex flex-col gap-4">
             <ClayInput
               label="Email Address"
-              placeholder="e.g. name@domain.com"
+              placeholder="Your Email Address"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

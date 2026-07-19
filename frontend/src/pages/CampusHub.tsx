@@ -257,7 +257,7 @@ export const CampusHub: React.FC = () => {
                   <Search size={14} className="absolute left-4 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Search resources by title or extension..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="clay-input pl-11 w-full text-xs font-semibold"

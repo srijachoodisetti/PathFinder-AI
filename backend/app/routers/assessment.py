@@ -171,9 +171,9 @@ def get_result(student_exam_id: int, db: Session = Depends(get_db), current_user
 def get_rankings(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Mock rank list combining student performance averages
     return [
-        {"rank": 1, "name": "Rajesh Kumar", "branch": "CSE", "score": 92.5},
-        {"rank": 2, "name": "Sunil Verma", "branch": "CSE", "score": 88.0},
-        {"rank": 3, "name": "Deepa Mehta", "branch": "ECE", "score": 85.5}
+        {"rank": 1, "name": "Student One", "branch": "CSE", "score": 92.5},
+        {"rank": 2, "name": "Student Two", "branch": "CSE", "score": 88.0},
+        {"rank": 3, "name": "Student Three", "branch": "ECE", "score": 85.5}
     ]
 
 @router.post("/faculty/create-exam", response_model=ExamResponse)

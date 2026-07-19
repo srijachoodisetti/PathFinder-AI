@@ -153,11 +153,11 @@ export const ParentDashboard: React.FC = () => {
               
               <div className="p-4 bg-white border border-slate-200 rounded-2xl text-xs text-left leading-relaxed flex flex-col gap-2 shadow-sm font-medium">
                 <div>
-                  <strong>To:</strong> ramesh@parent.com <br />
+                  <strong>To:</strong> parent@pathfinder.com <br />
                   <strong>Subject:</strong> PathFinder AI Weekly Digest: {childData.child_name}'s Progress
                 </div>
                 <div className="h-px bg-slate-100 my-1" />
-                <p>Hello Ramesh,</p>
+                <p>Hello Parent,</p>
                 <p>
                   Here is the summary of {childData.child_name}'s learning activities this week:
                 </p>

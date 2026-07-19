@@ -74,7 +74,7 @@ export const InternshipHub: React.FC = () => {
           <Search size={16} className="absolute left-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search roles or companies..."
+            placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="clay-input pl-11 w-full"

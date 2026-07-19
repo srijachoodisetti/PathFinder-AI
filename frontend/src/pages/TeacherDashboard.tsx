@@ -253,7 +253,7 @@ export const TeacherDashboard: React.FC = () => {
               <div className="flex flex-col gap-2">
                 <div className="p-3 bg-white border border-red-100 rounded-2xl text-xs flex justify-between items-center">
                   <div className="flex flex-col">
-                    <span className="font-bold">Rajesh Kumar</span>
+                    <span className="font-bold">Student User</span>
                     <span className="text-[10px] text-text/40">XP drop this week</span>
                   </div>
                   <span className="bg-danger text-white text-[9px] font-bold py-1 px-2.5 rounded-full">

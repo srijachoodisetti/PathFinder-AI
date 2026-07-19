@@ -103,7 +103,7 @@ export const CareerHub: React.FC = () => {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="e.g. Docker"
+                  placeholder="Add Your Skills"
                   value={newSkill}
                   onChange={(e) => setNewSkill(e.target.value)}
                   className="clay-input py-1 px-3 text-xs flex-1"

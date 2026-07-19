@@ -323,11 +323,11 @@ export const FacultyDashboard: React.FC = () => {
               <h3 className="font-bold text-base text-slate-700 pl-1">Student Performance Roll</h3>
               <ClayCard className="flex flex-col gap-3 max-h-96 overflow-y-auto">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs font-semibold text-slate-700">
-                  <span>👦 Rajesh Kumar (Grade 6)</span>
+                  <span>👦 Student User (Grade 6)</span>
                   <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">240 XP</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs font-semibold text-slate-700">
-                  <span>👦 Sunil Verma (Grade 6)</span>
+                  <span>👦 Student One (Grade 6)</span>
                   <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">180 XP</span>
                 </div>
               </ClayCard>

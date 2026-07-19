@@ -52,7 +52,7 @@ try:
         student_user = User(
             email="student@pathfinder.com",
             hashed_password=get_password_hash("student123"),
-            full_name="Rajesh Kumar",
+            full_name="Student User",
             role="student"
         )
         db.add(student_user)
@@ -73,7 +73,7 @@ try:
         teacher_user = User(
             email="teacher@pathfinder.com",
             hashed_password=get_password_hash("teacher123"),
-            full_name="Savitri Devi",
+            full_name="Teacher User",
             role="teacher"
         )
         db.add(teacher_user)
@@ -90,7 +90,7 @@ try:
         parent_user = User(
             email="parent@pathfinder.com",
             hashed_password=get_password_hash("parent123"),
-            full_name="Ramesh Kumar",
+            full_name="Parent User",
             role="parent"
         )
         db.add(parent_user)
@@ -103,7 +103,7 @@ try:
         db.add(p_profile)
         db.commit()
 
-        print("[SUCCESS] Users seeded: admin, student (Rajesh), teacher (Savitri), parent (Ramesh)")
+        print("[SUCCESS] Users seeded: admin, student, teacher, parent")
     else:
         print(f"Users already seeded ({db.query(User).count()} users found).")
 
@@ -399,7 +399,7 @@ The three-schema architecture is an index framework used to describe the structu
     else:
         print("Engineering curriculum already seeded.")
 
-    # 4. Seed personalization tables for Rajesh Kumar
+    # 4. Seed personalization tables for Student User
     student_user = db.query(User).filter(User.email == "student@pathfinder.com").first()
     if student_user and db.query(StudentGoal).filter(StudentGoal.user_id == student_user.id).count() == 0:
         print("Seeding Personalization & Recommendations...")

@@ -89,7 +89,7 @@ export const Signup: React.FC = () => {
           <ClayCard className="flex flex-col gap-4">
             <ClayInput
               label="Full Name"
-              placeholder="e.g. Rajesh Kumar"
+              placeholder="Your Full Name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
@@ -97,7 +97,7 @@ export const Signup: React.FC = () => {
 
             <ClayInput
               label="Email Address"
-              placeholder="e.g. name@domain.com"
+              placeholder="Your Email Address"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -106,7 +106,7 @@ export const Signup: React.FC = () => {
 
             <ClayInput
               label="Password"
-              placeholder="Choose a password"
+              placeholder="Enter Your Password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
