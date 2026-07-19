@@ -35,7 +35,7 @@ class Student(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
-    grade = Column(String, nullable=True)
+    year = Column(String, nullable=True)
     learning_goals = Column(Text, nullable=True)
     xp_points = Column(Integer, default=0)
     streak = Column(Integer, default=0)
@@ -50,7 +50,7 @@ class Teacher(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     subject_specialization = Column(String, nullable=True)
-    classes_managed = Column(String, nullable=True)  # Comma-separated grades
+    years_managed = Column(String, nullable=True)  # Comma-separated years
 
     user = orm_relationship("User", back_populates="teacher_profile")
 

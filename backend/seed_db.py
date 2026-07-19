@@ -60,7 +60,7 @@ try:
 
         student_profile = Student(
             user_id=student_user.id,
-            grade="Grade 6",
+            year="2nd Year",
             learning_goals="Learn basic maths and science concepts, improve logic",
             xp_points=240,
             streak=4,
@@ -82,7 +82,7 @@ try:
         t_profile = Teacher(
             user_id=teacher_user.id,
             subject_specialization="Science & Mathematics",
-            classes_managed="Grade 5, Grade 6, Grade 7"
+            years_managed="1st Year, 2nd Year, 3rd Year"
         )
         db.add(t_profile)
 
@@ -114,7 +114,7 @@ try:
             title="Introduction to Fractions & Ratios",
             description="Master the concepts of fractional parts, denominators, simplifying fractions, and basic ratios for everyday problem solving.",
             subject="Mathematics",
-            grade="Grade 6"
+            year="2nd Year"
         )
         db.add(c1)
         db.commit()
@@ -157,7 +157,7 @@ To add or subtract fractions, they must have the same denominator.
             title="Solar Energy and Sustainability",
             description="Learn about the environment, greenhouse gases, solar power, and agricultural ecosystems.",
             subject="Science",
-            grade="Grade 6"
+            year="2nd Year"
         )
         db.add(c2)
         db.commit()

@@ -9,10 +9,10 @@ def get_course(db: Session, course_id: int):
 def get_courses(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Course).offset(skip).limit(limit).all()
 
-def get_courses_by_subject(db: Session, subject: str, grade: Optional[str] = None):
+def get_courses_by_subject(db: Session, subject: str, year: Optional[str] = None):
     query = db.query(Course).filter(Course.subject == subject)
-    if grade:
-        query = query.filter(Course.grade == grade)
+    if year:
+        query = query.filter(Course.year == year)
     return query.all()
 
 def create_course(db: Session, course_in: CourseCreate, teacher_id: int):
@@ -20,7 +20,7 @@ def create_course(db: Session, course_in: CourseCreate, teacher_id: int):
         title=course_in.title,
         description=course_in.description,
         subject=course_in.subject,
-        grade=course_in.grade,
+        year=course_in.year,
         created_by=teacher_id
     )
     db.add(db_course)

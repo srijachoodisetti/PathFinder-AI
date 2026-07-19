@@ -27,7 +27,7 @@ export const TeacherDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Lesson Plan state
-  const [planGrade, setPlanGrade] = useState('Grade 6');
+  const [planYear, setPlanYear] = useState('2nd Year');
   const [planSubject, setPlanSubject] = useState('Science');
   const [planTopic, setPlanTopic] = useState('');
   const [planDuration, setPlanDuration] = useState(45);
@@ -54,7 +54,7 @@ export const TeacherDashboard: React.FC = () => {
       const studRes = await axios.get(`${API_URL}/teacher/students`);
       setStudents(studRes.data);
 
-      const analRes = await axios.get(`${API_URL}/teacher/class-analytics`);
+      const analRes = await axios.get(`${API_URL}/teacher/cohort-analytics`);
       setAnalytics(analRes.data);
     } catch (err) {
       console.error(err);
@@ -69,7 +69,7 @@ export const TeacherDashboard: React.FC = () => {
     setGeneratedPlan(null);
     try {
       const res = await axios.post(`${API_URL}/tutor/lesson-plan`, {
-        grade: planGrade,
+        year: planYear,
         subject: planSubject,
         topic: planTopic,
         duration_minutes: planDuration
@@ -188,7 +188,7 @@ export const TeacherDashboard: React.FC = () => {
           {/* Student Grids */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             <ClayCard className="p-4 overflow-hidden border border-slate-100 bg-white">
-              <h3 className="font-heading font-bold text-sm border-b pb-3 mb-4">Class Roster</h3>
+              <h3 className="font-heading font-bold text-sm border-b pb-3 mb-4">Student Roster</h3>
               
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-xs text-left border-collapse">
@@ -226,7 +226,7 @@ export const TeacherDashboard: React.FC = () => {
 
             {/* Score Distribution Chart */}
             <ClayCard className="flex flex-col gap-3">
-              <h3 className="font-heading font-bold text-sm border-b pb-2">Class Score Distribution</h3>
+              <h3 className="font-heading font-bold text-sm border-b pb-2">Cohort Score Distribution</h3>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData}>
@@ -265,15 +265,15 @@ export const TeacherDashboard: React.FC = () => {
 
             <ClayCard className="flex flex-col gap-3">
               <h4 className="font-heading font-bold text-sm text-text/80 border-b pb-2">
-                Class Activity Comparison
+                Cohort Activity Comparison
               </h4>
               <div className="flex flex-col gap-2 text-xs leading-relaxed font-medium text-text/75">
                 <div className="flex justify-between">
-                  <span>Grade 6 Science:</span>
+                  <span>2nd Year Science:</span>
                   <span className="font-bold text-success">84.2% Avg</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Grade 6 Math:</span>
+                  <span>2nd Year Math:</span>
                   <span className="font-bold text-primary">78.5% Avg</span>
                 </div>
               </div>
@@ -304,15 +304,16 @@ export const TeacherDashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-text/85">Grade Level</label>
+              <label className="text-xs font-semibold text-text/85">Year Level</label>
               <select
-                value={planGrade}
-                onChange={(e) => setPlanGrade(e.target.value)}
+                value={planYear}
+                onChange={(e) => setPlanYear(e.target.value)}
                 className="clay-input text-xs font-semibold !py-2 bg-slate-50 cursor-pointer"
               >
-                <option value="Grade 5">Grade 5</option>
-                <option value="Grade 6">Grade 6</option>
-                <option value="Grade 7">Grade 7</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
               </select>
             </div>
 

@@ -18,12 +18,9 @@ class UserCreate(UserBase):
     google_provider: Optional[bool] = False
     profile_photo: Optional[str] = None
     
-    # Student specific
-    grade: Optional[str] = None  # for student
-    
     # Teacher specific
     subject_specialization: Optional[str] = None  # for teacher
-    classes_managed: Optional[str] = None  # for teacher (comma separated grades)
+    years_managed: Optional[str] = None  # for teacher (comma separated years)
     
     # Parent specific
     child_email: Optional[str] = None  # for parent to track child
@@ -43,7 +40,7 @@ class UserUpdate(BaseModel):
 
 class StudentProfile(BaseModel):
     id: int
-    grade: Optional[str] = None
+    year: Optional[str] = None
     learning_goals: Optional[str] = None
     xp_points: int
     streak: int
@@ -56,7 +53,7 @@ class StudentProfile(BaseModel):
 class TeacherProfile(BaseModel):
     id: int
     subject_specialization: Optional[str] = None
-    classes_managed: Optional[str] = None
+    years_managed: Optional[str] = None
 
     class Config:
         from_attributes = True

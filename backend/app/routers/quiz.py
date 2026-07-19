@@ -170,7 +170,7 @@ def read_leaderboard(
             "full_name": s.user.full_name,
             "xp_points": s.xp_points,
             "streak": s.streak,
-            "grade": s.grade
+            "year": s.year
         }
         for s in top_students
     ]

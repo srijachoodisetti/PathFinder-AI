@@ -161,7 +161,7 @@ export const AITutorPage: React.FC = () => {
     setLoadingStudyPlan(true);
     try {
       const res = await axios.post(`${API_URL}/tutor/study-plan`, {
-        grade: user?.student_profile?.grade || "Grade 6",
+        year: user?.student_profile?.year || "2nd Year",
         subject: "Science",
         topic: "Solar Energy"
       });

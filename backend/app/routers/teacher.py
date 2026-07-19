@@ -16,22 +16,22 @@ def get_teacher_students(
     current_user: User = Depends(get_current_active_teacher)
 ) -> Any:
     """
-    Get all students in the teacher's grade/class.
+    Get all students in the teacher's assigned years.
     """
     teacher = current_user.teacher_profile
-    if not teacher or not teacher.classes_managed:
-        # Default to loading all students if classes not assigned
+    if not teacher or not teacher.years_managed:
+        # Default to loading all students if years not assigned
         students = db.query(Student).all()
     else:
-        grades = [g.strip() for g in teacher.classes_managed.split(",") if g.strip()]
-        students = db.query(Student).filter(Student.grade.in_(grades)).all()
+        years = [y.strip() for y in teacher.years_managed.split(",") if y.strip()]
+        students = db.query(Student).filter(Student.year.in_(years)).all()
 
     return [
         {
             "id": s.user.id,
             "full_name": s.user.full_name,
             "email": s.user.email,
-            "grade": s.grade,
+            "year": s.year,
             "xp_points": s.xp_points,
             "streak": s.streak,
             "weak_topics": s.weak_topics
@@ -39,13 +39,13 @@ def get_teacher_students(
         for s in students
     ]
 
-@router.get("/class-analytics")
-def get_class_analytics(
+@router.get("/cohort-analytics")
+def get_cohort_analytics(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ) -> Any:
     """
-    Compute aggregated class stats: average scores, attendance, weak topic alerts.
+    Compute aggregated cohort stats: average scores, attendance, weak topic alerts.
     """
     # Sample/Actual calculations
     student_count = db.query(Student).count()
@@ -100,12 +100,12 @@ def generate_assignment_worksheet(
     """
     Use AI to generate a classroom assignment outline/questions sheet.
     """
-    grade = request.get("grade", "Class 6")
+    year = request.get("year", "2nd Year")
     subject = request.get("subject", "Science")
     topic = request.get("topic", "Water Cycle")
     
     prompt = (
-        f"Generate a classroom quiz sheet for Grade {grade}, Subject {subject}, Topic: {topic}. "
+        f"Generate a classroom quiz sheet for Year {year}, Subject {subject}, Topic: {topic}. "
         f"Include 3 conceptual short questions and 2 word problems. Write clear answers for the teacher."
     )
     

@@ -42,7 +42,7 @@ def get_child_progress(
         "linked": True,
         "child_name": child_user.full_name,
         "child_email": child_user.email,
-        "grade": student.grade,
+        "year": student.year,
         "xp_points": student.xp_points,
         "streak": student.streak,
         "weak_topics": student.weak_topics,

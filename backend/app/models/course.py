@@ -9,7 +9,7 @@ class Course(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     subject = Column(String, nullable=False)  # Mathematics, Science, English, etc.
-    grade = Column(String, nullable=False)
+    year = Column(String, nullable=False)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     # Relationships

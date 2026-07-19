@@ -15,7 +15,7 @@ export const Signup: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Role conditional fields
-  const [grade, setGrade] = useState('Grade 6');
+  const [year, setYear] = useState('2nd Year');
   const [specialization, setSpecialization] = useState('Mathematics');
   const [childEmail, setChildEmail] = useState('');
 
@@ -31,10 +31,10 @@ export const Signup: React.FC = () => {
     };
 
     if (role === 'student') {
-      payload.grade = grade;
+      payload.year = year;
     } else if (role === 'teacher') {
       payload.subject_specialization = specialization;
-      payload.classes_managed = grade; // use selected grade as default managed
+      payload.years_managed = year; // use selected year as default managed
     } else if (role === 'parent') {
       payload.child_email = childEmail;
     }
@@ -57,11 +57,11 @@ export const Signup: React.FC = () => {
     { value: 'parent', label: 'Parent / Guardian' }
   ];
 
-  const gradeOptions = [
-    { value: 'Grade 5', label: 'Grade 5' },
-    { value: 'Grade 6', label: 'Grade 6' },
-    { value: 'Grade 7', label: 'Grade 7' },
-    { value: 'Grade 8', label: 'Grade 8' }
+  const yearOptions = [
+    { value: '1st Year', label: '1st Year' },
+    { value: '2nd Year', label: '2nd Year' },
+    { value: '3rd Year', label: '3rd Year' },
+    { value: '4th Year', label: '4th Year' }
   ];
 
   return (
@@ -123,10 +123,10 @@ export const Signup: React.FC = () => {
             {/* Conditional Fields based on Role selection */}
             {role === 'student' && (
               <ClaySelect
-                label="Select Class / Grade"
-                options={gradeOptions}
-                value={grade}
-                onChange={(e) => setGrade(e.target.value)}
+                label="Select Year"
+                options={yearOptions}
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
               />
             )}
 
@@ -140,10 +140,10 @@ export const Signup: React.FC = () => {
                   required
                 />
                 <ClaySelect
-                  label="Primary Grade Managed"
-                  options={gradeOptions}
-                  value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
+                  label="Primary Year Managed"
+                  options={yearOptions}
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
                 />
               </>
             )}

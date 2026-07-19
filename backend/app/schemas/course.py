@@ -29,7 +29,7 @@ class CourseBase(BaseModel):
     title: str
     description: Optional[str] = None
     subject: str  # Mathematics, Science, English, etc.
-    grade: str
+    year: str
 
 class CourseCreate(CourseBase):
     pass
@@ -38,7 +38,7 @@ class CourseUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     subject: Optional[str] = None
-    grade: Optional[str] = None
+    year: Optional[str] = None
 
 class CourseResponse(CourseBase):
     id: int

@@ -7,7 +7,7 @@ export interface UserProfileFirestore {
   email: string;
   full_name: string;
   role: 'student' | 'teacher' | 'parent' | 'admin';
-  grade?: string;
+  year?: string;
   specialization?: string;
   childEmail?: string;
   xp_points?: number;

@@ -28,7 +28,7 @@ class ChatResponse(BaseModel):
     practice_questions: Optional[List[Dict[str, Any]]] = None
 
 class LessonPlanRequest(BaseModel):
-    grade: str
+    year: str
     subject: str
     topic: str
     duration_minutes: int = 45

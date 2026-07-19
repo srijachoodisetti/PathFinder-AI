@@ -12,15 +12,15 @@ router = APIRouter()
 @router.get("/", response_model=List[CourseResponse])
 def read_courses(
     subject: Optional[str] = None,
-    grade: Optional[str] = None,
+    year: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ) -> Any:
     """
-    Retrieve all courses. Optionally filter by subject and grade.
+    Retrieve all courses. Optionally filter by subject and year.
     """
     if subject:
-        return crud_course.get_courses_by_subject(db, subject=subject, grade=grade)
+        return crud_course.get_courses_by_subject(db, subject=subject, year=year)
     return crud_course.get_courses(db)
 
 @router.get("/{course_id}", response_model=CourseResponse)

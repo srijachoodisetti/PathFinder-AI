@@ -134,7 +134,7 @@ class GeminiService:
         return GeminiService._get_mock_quiz(subject, topic)
 
     @staticmethod
-    def generate_lesson_plan(grade: str, subject: str, topic: str, duration: int) -> str:
+    def generate_lesson_plan(year: str, subject: str, topic: str, duration: int) -> str:
         """
         Generates a markdown lesson plan.
         """
@@ -142,7 +142,7 @@ class GeminiService:
             try:
                 model = genai.GenerativeModel("gemini-1.5-flash")
                 prompt = (
-                    f"Create a professional lesson plan for Grade {grade}, Subject: {subject}, Topic: {topic}. "
+                    f"Create a professional lesson plan for B.Tech Year {year}, Subject: {subject}, Topic: {topic}. "
                     f"Duration: {duration} minutes. Include objectives, materials, timeline, and key learning outcomes."
                 )
                 response = model.generate_content(prompt)
@@ -150,7 +150,7 @@ class GeminiService:
             except Exception as e:
                 print(f"Gemini Lesson Plan error: {e}")
 
-        return f"# AI-Generated Lesson Plan: {topic}\n**Grade:** {grade} | **Subject:** {subject} | **Duration:** {duration} mins\n\n- Objectives: Master {topic}.\n- Outcomes: Practical application and skill building."
+        return f"# AI-Generated Lesson Plan: {topic}\n**Year:** {year} | **Subject:** {subject} | **Duration:** {duration} mins\n\n- Objectives: Master {topic}.\n- Outcomes: Practical application and skill building."
 
     @staticmethod
     def generate_flashcards(subject: str, topic: str) -> List[Dict[str, Any]]:
@@ -225,14 +225,14 @@ class GeminiService:
         }
 
     @staticmethod
-    def generate_study_plan(grade: str, subject: str, topic: str) -> str:
+    def generate_study_plan(year: str, subject: str, topic: str) -> str:
         """
         Generates a weekly hour-by-hour revision/study plan.
         """
         if GEMINI_AVAILABLE:
             try:
                 model = genai.GenerativeModel("gemini-1.5-flash")
-                prompt = f"Generate a weekly 7-day study planner for a student in {grade} studying Subject: {subject}, Topic: {topic}. Format as a beautiful markdown table."
+                prompt = f"Generate a weekly 7-day study planner for a student in B.Tech Year {year} studying Subject: {subject}, Topic: {topic}. Format as a beautiful markdown table."
                 res = model.generate_content(prompt)
                 return res.text
             except Exception as e:

@@ -17,7 +17,7 @@ export interface UserProfile {
   is_active: boolean;
   student_profile?: {
     id: number;
-    grade: string;
+    year: string;
     learning_goals: string;
     xp_points: number;
     streak: number;
@@ -27,7 +27,7 @@ export interface UserProfile {
   teacher_profile?: {
     id: number;
     subject_specialization: string;
-    classes_managed: string;
+    years_managed: string;
   };
   parent_profile?: {
     id: number;

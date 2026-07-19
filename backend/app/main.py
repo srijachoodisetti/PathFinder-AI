@@ -69,7 +69,7 @@ def _seed_database():
 
             student_profile = Student(
                 user_id=student_user.id,
-                grade="Grade 6",
+                year="2nd Year",
                 learning_goals="Learn basic maths and science concepts, improve logic",
                 xp_points=240,
                 streak=4,
@@ -91,7 +91,7 @@ def _seed_database():
             t_profile = Teacher(
                 user_id=teacher_user.id,
                 subject_specialization="Science & Mathematics",
-                classes_managed="Grade 5, Grade 6, Grade 7",
+                years_managed="1st Year, 2nd Year, 3rd Year",
             )
             db.add(t_profile)
 
@@ -118,7 +118,7 @@ def _seed_database():
                 title="Introduction to Fractions & Ratios",
                 description="Master the concepts of fractional parts, denominators, simplifying fractions, and basic ratios.",
                 subject="Mathematics",
-                grade="Grade 6",
+                year="2nd Year",
             )
             db.add(c1)
             db.commit()
@@ -136,7 +136,7 @@ def _seed_database():
                 title="Solar Energy and Sustainability",
                 description="Learn about the environment, greenhouse gases, solar power, and how we protect ecosystems.",
                 subject="Science",
-                grade="Grade 6",
+                year="2nd Year",
             )
             db.add(c2)
             db.commit()

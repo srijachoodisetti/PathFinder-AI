@@ -143,7 +143,7 @@ def generate_tutor_lesson_plan(
         raise HTTPException(status_code=403, detail="Access denied")
         
     plan_md = GeminiService.generate_lesson_plan(
-        grade=plan_in.grade,
+        year=plan_in.year,
         subject=plan_in.subject,
         topic=plan_in.topic,
         duration=plan_in.duration_minutes
@@ -182,8 +182,8 @@ def get_ai_study_plan(
     """
     Endpoint to generate a revision plan table.
     """
-    grade = request.get("grade", "Grade 6")
+    year = request.get("year", "2nd Year")
     subject = request.get("subject", "Science")
     topic = request.get("topic", "Solar energy")
-    plan = GeminiService.generate_study_plan(grade=grade, subject=subject, topic=topic)
+    plan = GeminiService.generate_study_plan(year=year, subject=subject, topic=topic)
     return {"plan": plan}

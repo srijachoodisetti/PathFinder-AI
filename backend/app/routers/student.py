@@ -34,7 +34,7 @@ def get_personalized_recommendations(
                 "title": c.title,
                 "subject": c.subject,
                 "description": c.description,
-                "grade": c.grade
+                "year": c.year
             })
             
     weak_topics_list = ["Fraction Division", "Soil Nutrients"]
@@ -112,8 +112,8 @@ def update_profile(
         student.language_preference = profile_data["language_preference"]
     if "learning_goals" in profile_data:
         student.learning_goals = profile_data["learning_goals"]
-    if "grade" in profile_data:
-        student.grade = profile_data["grade"]
+    if "year" in profile_data:
+        student.year = profile_data["year"]
     if "weak_topics" in profile_data:
         student.weak_topics = profile_data["weak_topics"]
         

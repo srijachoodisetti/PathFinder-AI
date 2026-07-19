@@ -49,7 +49,7 @@ export const CoursesPage: React.FC = () => {
             id: l.course_id,
             title: l.course_title,
             subject: l.subject,
-            grade: user?.student_profile?.grade || 'Grade 6',
+            year: user?.student_profile?.year || '2nd Year',
             lessons: []
           };
         }
@@ -70,7 +70,7 @@ export const CoursesPage: React.FC = () => {
 
     try {
       const res = await axios.get(`${API_URL}/courses`, {
-        params: { subject, grade: user?.student_profile?.grade }
+        params: { subject, year: user?.student_profile?.year }
       });
       setCourses(res.data);
       
@@ -170,7 +170,7 @@ export const CoursesPage: React.FC = () => {
                   className={`w-full p-3 rounded-2xl border text-xs font-semibold text-left transition-all ${selectedCourse?.id === course.id ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-white border-slate-200 text-text/80 hover:bg-slate-50'}`}
                 >
                   <span className="block truncate font-bold">{course.title}</span>
-                  <span className="text-[10px] text-text/50 capitalize font-medium">{course.subject} • {course.grade}</span>
+                  <span className="text-[10px] text-text/50 capitalize font-medium">{course.subject} • {course.year}</span>
                 </button>
               ))
             ) : (

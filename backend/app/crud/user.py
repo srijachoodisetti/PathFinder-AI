@@ -25,7 +25,7 @@ def create_user(db: Session, user_in: UserCreate):
     if user_in.role == "student":
         student_profile = Student(
             user_id=db_user.id,
-            grade=user_in.grade,
+            year=user_in.year,
             xp_points=0,
             streak=1,
             language_preference="English"
@@ -35,7 +35,7 @@ def create_user(db: Session, user_in: UserCreate):
         teacher_profile = Teacher(
             user_id=db_user.id,
             subject_specialization=user_in.subject_specialization,
-            classes_managed=user_in.classes_managed
+            years_managed=user_in.years_managed
         )
         db.add(teacher_profile)
     elif user_in.role == "parent":
