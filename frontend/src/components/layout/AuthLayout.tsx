@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Compass, FileText, Shield, Users } from 'lucide-react';
-import { AppFooter } from './AppFooter';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -117,7 +116,6 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
         </div>
 
       </div>
-      <AppFooter />
     </div>
   );
 };

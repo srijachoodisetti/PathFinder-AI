@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuthStore, API_URL } from '../store/authStore';
 import { ClayCard, ClayButton, ClayInput, ClaySelect } from '../components/ui';
 import { FilePlus2, Sparkles, PlusCircle, CheckCircle, ShieldAlert } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export const ExamBuilder: React.FC = () => {
   const { token } = useAuthStore();
@@ -37,7 +38,7 @@ export const ExamBuilder: React.FC = () => {
         is_active: true,
         question_ids: selectedQuestions
       }, { headers });
-      alert("Exam created successfully!");
+      toast.success('Exam created successfully!');
     } catch (err) {
       console.error(err);
     }

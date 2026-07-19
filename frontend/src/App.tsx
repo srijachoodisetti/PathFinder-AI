@@ -1,7 +1,10 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import { DashboardLayout } from './components/layout/DashboardLayout';
+import { ErrorBoundary } from './components/ErrorBoundary';
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 // Pages Lazy Load
 const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
@@ -12,7 +15,6 @@ const StudentDashboard = lazy(() => import('./pages/StudentDashboard').then(m =>
 const FacultyDashboard = lazy(() => import('./pages/FacultyDashboard').then(m => ({ default: m.FacultyDashboard })));
 const ParentDashboard = lazy(() => import('./pages/ParentDashboard').then(m => ({ default: m.ParentDashboard })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AITutorPage = lazy(() => import('./pages/AITutorPage').then(m => ({ default: m.AITutorPage })));
 const AcademicLearning = lazy(() => import('./pages/AcademicLearning').then(m => ({ default: m.AcademicLearning })));
 const FreeVideos = lazy(() => import('./pages/FreeVideos').then(m => ({ default: m.FreeVideos })));
 const PlacementPrep = lazy(() => import('./pages/PlacementPrep').then(m => ({ default: m.PlacementPrep })));
@@ -31,7 +33,6 @@ const StudyGroups = lazy(() => import('./pages/StudyGroups').then(m => ({ defaul
 const CampusHub = lazy(() => import('./pages/CampusHub').then(m => ({ default: m.CampusHub })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const CareerDashboard = lazy(() => import('./pages/CareerDashboard').then(m => ({ default: m.CareerDashboard })));
-const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
 
 // ── Full-screen auth loading spinner ─────────────────────────────────────────
 const AuthLoadingScreen: React.FC = () => (
@@ -102,61 +103,62 @@ const AdminRoute: React.FC = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<AuthLoadingScreen />}>
-        <Routes>
-          {/* Root — smart redirect depending on auth state */}
-          <Route path="/" element={<RootRedirect />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<AuthLoadingScreen />}>
+          <Routes>
+            {/* Root — smart redirect depending on auth state */}
+            <Route path="/" element={<RootRedirect />} />
 
-          {/* Public Routes — redirect to dashboard if already logged in */}
-          <Route path="/login" element={<PublicOnlyRoute element={<Login />} />} />
-          <Route path="/signup" element={<PublicOnlyRoute element={<Signup />} />} />
-          <Route path="/forgot-password" element={<PublicOnlyRoute element={<ForgotPassword />} />} />
+            {/* Public Routes — redirect to dashboard if already logged in */}
+            <Route path="/login" element={<PublicOnlyRoute element={<Login />} />} />
+            <Route path="/signup" element={<PublicOnlyRoute element={<Signup />} />} />
+            <Route path="/forgot-password" element={<PublicOnlyRoute element={<ForgotPassword />} />} />
 
-          {/* Landing page (marketing) — always accessible */}
-          <Route path="/welcome" element={<LandingPage />} />
+            {/* Landing page (marketing) — always accessible */}
+            <Route path="/welcome" element={<LandingPage />} />
 
-          {/* Guarded Routes */}
-          <Route element={<ProtectedLayout />}>
-            <Route path="/dashboard" element={<DashboardRedirector />} />
-            <Route path="/ai-tutor" element={<AITutorPage />} />
-            <Route path="/academic" element={<AcademicLearning />} />
-            <Route path="/videos" element={<FreeVideos />} />
-            <Route path="/placement" element={<PlacementPrep />} />
-            <Route path="/coding" element={<CodingHub />} />
-            <Route path="/projects" element={<ProjectHub />} />
-            <Route path="/career" element={<CareerHub />} />
-            <Route path="/internships" element={<InternshipHub />} />
-            <Route path="/certifications" element={<CertificationsPage />} />
-            <Route path="/quizzes" element={<QuizPage />} />
-            <Route path="/exams" element={<ExamCenter />} />
-            <Route path="/exam/:examId" element={<OnlineExam />} />
-            <Route path="/exam/result/:resultId" element={<ResultReview />} />
-            <Route path="/forum" element={<DiscussionForum />} />
-            <Route path="/groups" element={<StudyGroups />} />
-            <Route path="/campus" element={<CampusHub />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/profile" element={<Navigate to="/settings" replace />} />
-            <Route path="/career-dashboard" element={<CareerDashboard />} />
-            <Route path="/about" element={<AboutPage />} />
+            {/* Guarded Routes */}
+            <Route element={<ProtectedLayout />}>
+              <Route path="/dashboard" element={<DashboardRedirector />} />
+              <Route path="/academic" element={<AcademicLearning />} />
+              <Route path="/videos" element={<FreeVideos />} />
+              <Route path="/placement" element={<PlacementPrep />} />
+              <Route path="/coding" element={<CodingHub />} />
+              <Route path="/projects" element={<ProjectHub />} />
+              <Route path="/career" element={<CareerHub />} />
+              <Route path="/internships" element={<InternshipHub />} />
+              <Route path="/certifications" element={<CertificationsPage />} />
+              <Route path="/quizzes" element={<QuizPage />} />
+              <Route path="/exams" element={<ExamCenter />} />
+              <Route path="/exam/:examId" element={<OnlineExam />} />
+              <Route path="/exam/result/:resultId" element={<ResultReview />} />
+              <Route path="/forum" element={<DiscussionForum />} />
+              <Route path="/groups" element={<StudyGroups />} />
+              <Route path="/campus" element={<CampusHub />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/profile" element={<Navigate to="/settings" replace />} />
+              <Route path="/career-dashboard" element={<CareerDashboard />} />
 
-            {/* Teacher/Faculty Specific */}
-            <Route element={<TeacherRoute />}>
-              <Route path="/faculty" element={<FacultyDashboard />} />
-              <Route path="/exam-builder" element={<ExamBuilder />} />
+              {/* Teacher/Faculty Specific */}
+              <Route element={<TeacherRoute />}>
+                <Route path="/faculty" element={<FacultyDashboard />} />
+                <Route path="/exam-builder" element={<ExamBuilder />} />
+              </Route>
+
+              {/* Admin Specific */}
+              <Route element={<AdminRoute />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Route>
             </Route>
 
-            {/* Admin Specific */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-            </Route>
-          </Route>
-
-          {/* Fallback — unknown routes redirect to root smart-redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+            {/* 404 Not Found */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

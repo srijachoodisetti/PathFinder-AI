@@ -16,7 +16,6 @@ import {
   FileText
 } from 'lucide-react';
 import { ClayCard, ClayButton } from '../components/ui';
-import { AppFooter } from '../components/layout/AppFooter';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -320,9 +319,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <AppFooter />
     </div>
   );
 };

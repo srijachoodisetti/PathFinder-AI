@@ -21,7 +21,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
 from app.routers import (
-    auth, tutor, course, quiz, student, teacher, parent, admin,
+    auth, course, quiz, student, teacher, parent, admin,
     engineering, ai_features, personalization, assessment, community, career
 )
 from app.models.user import User, Student
@@ -303,7 +303,6 @@ async def security_rate_limit_cache_middleware(request: Request, call_next):
 
 # ── API Routers (all under /api/v1/) ─────────────────────────────────────
 app.include_router(auth.router,            prefix=f"{settings.API_V1_STR}/auth",            tags=["auth"])
-app.include_router(tutor.router,           prefix=f"{settings.API_V1_STR}/tutor",           tags=["tutor"])
 app.include_router(course.router,          prefix=f"{settings.API_V1_STR}/courses",         tags=["courses"])
 app.include_router(quiz.router,            prefix=f"{settings.API_V1_STR}/quizzes",         tags=["quizzes"])
 app.include_router(student.router,         prefix=f"{settings.API_V1_STR}/student",         tags=["student"])

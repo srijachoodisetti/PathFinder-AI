@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useOfflineStore } from '../../store/offlineStore';
@@ -16,7 +16,6 @@ import {
   Menu,
   X,
   FileText,
-  BrainCircuit,
   HeartHandshake,
   Video,
   Briefcase,
@@ -26,7 +25,6 @@ import {
   Info
 } from 'lucide-react';
 import { ClayCard, ClayButton } from '../ui';
-import { AppFooter } from './AppFooter';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -38,6 +36,17 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAboutOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const getLinks = () => {
     const role = user?.role || 'student';
@@ -57,9 +66,7 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
         { path: '/career-dashboard', label: 'Resume & Career Intelligence', icon: Briefcase },
         { path: '/internships', label: 'Internships Tracker', icon: Briefcase },
         { path: '/certifications', label: 'Certifications', icon: Award },
-        { path: '/ai-tutor', label: 'AI Tutor Chat', icon: BrainCircuit },
         { path: '/settings', label: 'Settings', icon: Settings },
-        { path: '/about', label: 'About', icon: Info },
       ];
     } else if (role === 'teacher') {
       return [
@@ -70,20 +77,17 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
         { path: '/campus', label: 'Campus Hub', icon: Landmark },
         { path: '/academic', label: 'Syllabus Review', icon: BookOpen },
         { path: '/settings', label: 'Settings', icon: Settings },
-        { path: '/about', label: 'About', icon: Info },
       ];
     } else if (role === 'parent') {
       return [
         { path: '/dashboard', label: 'Parent Portal', icon: HeartHandshake },
         { path: '/settings', label: 'Settings', icon: Settings },
-        { path: '/about', label: 'About', icon: Info },
       ];
     } else if (role === 'admin') {
       return [
         { path: '/dashboard', label: 'System Admin', icon: Settings },
         { path: '/admin', label: 'Curriculum & Users', icon: Users },
         { path: '/settings', label: 'Settings', icon: Settings },
-        { path: '/about', label: 'About', icon: Info },
       ];
     }
     return [];
@@ -173,6 +177,15 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
           </div>
 
           <ClayButton
+            onClick={() => setAboutOpen(true)}
+            className="p-2 text-text/60 hover:text-primary hover:bg-indigo-50 !shadow-none !border-none !py-2 !px-3 rounded-full flex items-center gap-1.5"
+            title="About PathFinder AI"
+          >
+            <Info size={16} />
+            <span className="hidden sm:inline text-xs font-bold">About</span>
+          </ClayButton>
+
+          <ClayButton
             onClick={handleLogout}
             className="p-2 text-text/60 hover:text-danger hover:bg-red-50 !shadow-none !border-none !py-2 !px-3 rounded-full flex items-center gap-1.5"
             title="Log Out"
@@ -234,9 +247,64 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full">
             {children}
           </div>
-          <AppFooter />
         </main>
       </div>
+
+      {aboutOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-opacity duration-300"
+          onClick={() => setAboutOpen(false)}
+        >
+          <div 
+            className="bg-white/95 backdrop-blur-lg p-6 sm:p-8 rounded-[24px] border border-white/60 shadow-[12px_12px_24px_rgba(0,0,0,0.1),-12px_-12px_24px_#ffffff] max-w-md w-full text-left relative overflow-hidden transition-all transform scale-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-center border-b pb-3">
+                <h3 className="font-heading font-extrabold text-xl text-primary flex items-center gap-2">
+                  <span>🌱</span> About PathFinder AI
+                </h3>
+                <button 
+                  onClick={() => setAboutOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                PathFinder AI is an AI-powered Engineering Student Platform designed to help students excel in academics, coding, placements, internships, project development, interview preparation, and career growth through intelligent learning tools.
+              </p>
+              
+              <div className="flex flex-col gap-2.5 bg-slate-50 p-4 rounded-2xl border border-slate-100/50 mt-2 text-xs font-semibold">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Version</span>
+                  <span className="text-slate-800 font-bold">1.0.0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Developer</span>
+                  <span className="text-slate-800 font-bold">Srija Chodisetti</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Email</span>
+                  <a href="mailto:srijachoodisetti@gmail.com" className="text-primary hover:underline font-bold">
+                    srijachoodisetti@gmail.com
+                  </a>
+                </div>
+              </div>
+              
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => setAboutOpen(false)}
+                  className="px-5 py-2 bg-primary text-white font-bold text-sm rounded-full shadow-[4px_4px_8px_rgba(79,70,229,0.2),-4px_-4px_8px_#ffffff] transition-all hover:bg-primary/90 active:scale-95 cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

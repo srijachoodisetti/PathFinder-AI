@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuthStore, API_URL } from '../store/authStore';
 import { ClayCard, ClayButton, ClayInput } from '../components/ui';
 import { MessageSquare, Sparkles, Pin, CheckCircle2, ArrowUp, ArrowDown, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export const DiscussionForum: React.FC = () => {
   const { token, user } = useAuthStore();
@@ -64,7 +65,7 @@ export const DiscussionForum: React.FC = () => {
       }, { headers });
 
       if (modRes.data.is_flagged) {
-        alert("Your post contains flagged keywords and cannot be submitted.");
+        toast.error('Your post contains flagged keywords and cannot be submitted.');
         return;
       }
 

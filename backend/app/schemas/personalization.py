@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 class LearningHistoryBase(BaseModel):
@@ -93,3 +93,11 @@ class SkillProgressResponse(SkillProgressBase):
     last_updated: datetime
     class Config:
         from_attributes = True
+
+
+class RecommendationResponse(BaseModel):
+    recommended_courses: List[Dict[str, Any]]
+    weak_topics: List[str]
+    xp_points: int
+    streak: int
+

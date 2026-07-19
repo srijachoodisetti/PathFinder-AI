@@ -8,6 +8,7 @@ import {
   Code, BookOpen, BarChart2, Mic, Loader2, History, ArrowUpRight,
   Download, ArrowRight, AlertTriangle, CheckSquare
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 // ── Types ────────────────────────────────────────────────────────────
 interface ATSResult {
@@ -201,7 +202,11 @@ export const CareerDashboard: React.FC = () => {
   const handleFile = (file: File) => {
     const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(file.type)) {
-      alert('Please upload a PDF or DOCX file.');
+      toast.error('Please upload a PDF or DOCX file.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size exceeds 10MB limit.');
       return;
     }
     setSelectedFile(file);
@@ -220,11 +225,12 @@ export const CareerDashboard: React.FC = () => {
         headers: { ...headers, 'Content-Type': 'multipart/form-data' }
       });
       setAtsResult(res.data);
+      toast.success('Resume uploaded and analyzed successfully!');
       // Automatically refresh history to populate dropdown lists
       loadHistory();
     } catch (err: any) {
       console.error(err);
-      alert('Upload failed. Please try again.');
+      toast.error('Upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -234,7 +240,7 @@ export const CareerDashboard: React.FC = () => {
   const handleImproveResume = async () => {
     const targetId = selectedResumeId || (history.length > 0 ? (history[0].analysis_id || history[0].id) : null);
     if (!targetId) {
-      alert('Please upload or select a resume first.');
+      toast.error('Please upload or select a resume first.');
       return;
     }
     setImproving(true);
@@ -244,9 +250,10 @@ export const CareerDashboard: React.FC = () => {
         resume_id: targetId
       }, { headers });
       setImproveResult(res.data);
+      toast.success('Resume improvements generated successfully!');
     } catch (err) {
       console.error(err);
-      alert('Failed to generate resume improvements.');
+      toast.error('Failed to generate resume improvements.');
     } finally {
       setImproving(false);
     }
@@ -268,7 +275,7 @@ export const CareerDashboard: React.FC = () => {
   const handleGapAnalysis = async () => {
     const targetId = selectedResumeId || (history.length > 0 ? (history[0].analysis_id || history[0].id) : null);
     if (!targetId) {
-      alert('Please upload or select a resume first.');
+      toast.error('Please upload or select a resume first.');
       return;
     }
     setGapLoading(true);
@@ -279,9 +286,10 @@ export const CareerDashboard: React.FC = () => {
         job_description: gapJobDesc || 'General Software Engineering Role'
       }, { headers });
       setGapResult(res.data);
+      toast.success('Skill gap analysis completed successfully!');
     } catch (err) {
       console.error(err);
-      alert('Failed to generate Skill Gap analysis.');
+      toast.error('Failed to generate Skill Gap analysis.');
     } finally {
       setGapLoading(false);
     }
@@ -457,6 +465,30 @@ export const CareerDashboard: React.FC = () => {
                 {uploading ? <><Loader2 size={15} className="animate-spin" /> Analyzing with SkillBridge AI...</> : <><Sparkles size={14} /> Check ATS Score</>}
               </ClayButton>
             </ClayCard>
+
+            {selectedFile && atsResult && (
+              <div className="bg-emerald-50/50 dark:bg-emerald-950/15 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl p-4 flex flex-col gap-3 mt-4 text-left shadow-sm">
+                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-extrabold text-sm">
+                  <CheckCircle2 size={16} />
+                  <span>Resume Uploaded Successfully</span>
+                </div>
+                
+                <div className="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-400 font-semibold">
+                  <p><span className="text-slate-400">File Name:</span> {selectedFile.name}</p>
+                  <p><span className="text-slate-400">File Size:</span> {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                  <p><span className="text-slate-400">Upload Time:</span> {new Date().toLocaleTimeString('en-IN')}</p>
+                </div>
+                
+                {atsResult.ats_result && (
+                  <div className="border-t border-emerald-200/30 dark:border-emerald-900/30 pt-2 mt-1">
+                    <p className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mb-1.5">Parsed Text Feedback</p>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 max-h-24 overflow-y-auto leading-relaxed font-mono">
+                      {atsResult.ats_result.overall_feedback || "Extracted resume content successfully matched against SkillBridge parameters."}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Results Column */}

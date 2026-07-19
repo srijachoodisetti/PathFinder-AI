@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.schemas.tutor import RecommendationResponse
+from app.schemas.personalization import RecommendationResponse
 from app.routers.deps import get_current_user
 from app.models.user import User, Student
 from app.models.course import Course
