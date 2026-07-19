@@ -204,7 +204,11 @@ app = FastAPI(
 # ── Exception Handlers ───────────────────────────────────────────────────
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    logger.error(f"HTTP error occurred: {exc.detail} (status code: {exc.status_code})")
+    # Log 404 (Not Found) and 405 (Method Not Allowed) as INFO rather than ERROR to avoid health check noise
+    if exc.status_code in (404, 405):
+        logger.info(f"HTTP {exc.status_code}: {exc.detail} on {request.method} {request.url.path}")
+    else:
+        logger.error(f"HTTP error occurred: {exc.detail} (status code: {exc.status_code})")
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
@@ -326,6 +330,42 @@ def api_root():
     }
 
 
+# Verify frontend dist exists in production/Render mode
+if settings.PRODUCTION or os.environ.get("RENDER"):
+    if not _FRONTEND_DIST.exists() or not (_FRONTEND_DIST / "index.html").exists():
+        logger.error(
+            f"❌ CRITICAL ERROR: Frontend build output 'dist/index.html' is missing at {_FRONTEND_DIST}!"
+        )
+        raise RuntimeError(
+            f"Frontend build output 'dist/index.html' is missing at {_FRONTEND_DIST} in production mode! "
+            "Please ensure that the build command compiles the React frontend successfully."
+        )
+
+# ── Route for Root `/` (Supports GET and HEAD) ───────────────────────────
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+async def serve_root(request: Request):
+    index_file = _FRONTEND_DIST / "index.html"
+    if not index_file.exists():
+        if settings.PRODUCTION or os.environ.get("RENDER"):
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Production Frontend build not found."}
+            )
+        if request.method == "HEAD":
+            return Response(status_code=200, media_type="application/json")
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "api-only",
+                "message": "Frontend not built. API is available at /api/v1/",
+                "docs": f"{settings.API_V1_STR}/docs",
+            }
+        )
+    if request.method == "HEAD":
+        return Response(status_code=200, media_type="text/html")
+    return FileResponse(str(index_file), media_type="text/html")
+
+
 # ── Mount React Static Assets ─────────────────────────────────────────────
 # Mount /assets BEFORE the SPA catch-all so Vite's hashed files are served correctly
 if _FRONTEND_DIST.exists():
@@ -335,7 +375,7 @@ if _FRONTEND_DIST.exists():
 
     # ── SPA Catch-All: unknown paths → index.html ─────────────────────────
     # This MUST be the last route so it doesn't intercept /api/* routes
-    @app.get("/{full_path:path}", include_in_schema=False)
+    @app.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     async def serve_react_spa(full_path: str, request: Request):
         # Never intercept API calls — return 404 JSON instead
         clean_path = full_path.strip("/")
@@ -352,6 +392,8 @@ if _FRONTEND_DIST.exists():
 
         index_file = _FRONTEND_DIST / "index.html"
         if index_file.exists():
+            if request.method == "HEAD":
+                return Response(status_code=200, media_type="text/html")
             return FileResponse(str(index_file), media_type="text/html")
 
         return JSONResponse(
@@ -366,11 +408,3 @@ else:
         f"[PathFinder AI] Frontend dist not found at {_FRONTEND_DIST}. "
         "API-only mode. Run 'cd frontend && npm install && npm run build' to enable the frontend."
     )
-
-    @app.get("/", tags=["system"])
-    def root_no_frontend():
-        return {
-            "status": "api-only",
-            "message": "Frontend not built. API is available at /api/v1/",
-            "docs": f"{settings.API_V1_STR}/docs",
-        }
