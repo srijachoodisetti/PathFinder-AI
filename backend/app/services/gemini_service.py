@@ -42,8 +42,8 @@ class GeminiService:
 
         system_instruction = (
             "You are PathFinder AI, a supportive, clear educational tutor. "
-            "Explain concepts simply, use step-by-step calculations, and connect lessons "
-            "to social impact, renewable resources, or sustainability wherever possible."
+            "Explain concepts simply, use step-by-step calculations, and help students "
+            "build skills, prepare for exams, and achieve their career goals."
         )
 
         final_prompt = f"{system_instruction}\n\n{context_block}Current User Prompt: {full_prompt}"
@@ -143,40 +143,40 @@ class GeminiService:
                 model = genai.GenerativeModel("gemini-1.5-flash")
                 prompt = (
                     f"Create a professional lesson plan for Grade {grade}, Subject: {subject}, Topic: {topic}. "
-                    f"Duration: {duration} minutes. Include objectives, materials, timeline, and sustainability impact."
+                    f"Duration: {duration} minutes. Include objectives, materials, timeline, and key learning outcomes."
                 )
                 response = model.generate_content(prompt)
                 return response.text
             except Exception as e:
                 print(f"Gemini Lesson Plan error: {e}")
 
-        return f"# AI-Generated Lesson Plan: {topic}\n**Grade:** {grade} | **Subject:** {subject} | **Duration:** {duration} mins\n\n- Objectives: Master {topic}.\n- Eco link: Resource optimization."
+        return f"# AI-Generated Lesson Plan: {topic}\n**Grade:** {grade} | **Subject:** {subject} | **Duration:** {duration} mins\n\n- Objectives: Master {topic}.\n- Outcomes: Practical application and skill building."
 
     @staticmethod
     def generate_flashcards(subject: str, topic: str) -> List[Dict[str, Any]]:
-        """
-        Generates a set of flippable study flashcards (Question/Answer pairs).
-        """
-        if GEMINI_AVAILABLE:
-            try:
-                model = genai.GenerativeModel("gemini-1.5-flash")
-                prompt = (
-                    f"Generate a JSON list of 4 flashcards for Subject: {subject}, Topic: {topic}. "
-                    f"Output format must be a JSON array of objects with keys: 'front' (the question) and 'back' (the explanation/answer). "
-                    f"Return only valid JSON."
-                )
-                res = model.generate_content(prompt)
-                cleaned = res.text.replace("```json", "").replace("```", "").strip()
-                return json.loads(cleaned)
-            except Exception as e:
-                print(f"Gemini Flashcards error: {e}")
+      """
+      Generates a set of flippable study flashcards (Question/Answer pairs).
+      """
+      if GEMINI_AVAILABLE:
+          try:
+              model = genai.GenerativeModel("gemini-1.5-flash")
+              prompt = (
+                  f"Generate a JSON list of 4 flashcards for Subject: {subject}, Topic: {topic}. "
+                  f"Output format must be a JSON array of objects with keys: 'front' (the question) and 'back' (the explanation/answer). "
+                  f"Return only valid JSON."
+              )
+              res = model.generate_content(prompt)
+              cleaned = res.text.replace("```json", "").replace("```", "").strip()
+              return json.loads(cleaned)
+          except Exception as e:
+              print(f"Gemini Flashcards error: {e}")
 
-        return [
-            {"front": f"What is the key principle of {topic}?", "back": f"The primary goal of {topic} is to simplify concepts and apply them locally."},
-            {"front": f"Name a real-world application of {topic}.", "back": "It is widely used in resource distribution and environmental tracking."},
-            {"front": "How does sustainability link to this?", "back": "Optimizing variables reduces physical waste and saves energy."},
-            {"front": "What is the common error when learning this?", "back": "Skipping basic fractions or conversions leads to calculation errors."}
-        ]
+      return [
+          {"front": f"What is the key principle of {topic}?", "back": f"The primary goal of {topic} is to simplify concepts and apply them locally."},
+          {"front": f"Name a real-world application of {topic}.", "back": "It is widely used in resource distribution and environmental tracking."},
+          {"front": "What is the key takeaway of this topic?", "back": "Understanding its core concepts and practical real-world applications."},
+          {"front": "What is the common error when learning this?", "back": "Skipping basic fractions or conversions leads to calculation errors."}
+      ]
 
     @staticmethod
     def generate_mindmap(subject: str, topic: str) -> Dict[str, Any]:
@@ -254,11 +254,11 @@ class GeminiService:
     @staticmethod
     def get_motivation() -> str:
         quotes = [
-            "Your learning today builds a greener and smarter village tomorrow! 🌟",
+            "Your learning today builds a brighter and smarter career tomorrow! 🌟",
             "Failing is just a step towards finding the correct formula. Keep trying! 📐",
-            "Small actions lead to massive social impact. Every minute you study counts! 🌱",
-            "Be like solar energy: shine continuous warmth and light onto everyone around you! ☀️",
-            "Knowledge is a seed. Cultivate it daily, and watch it grow into a giant forest! 🌳"
+            "Consistent effort leads to massive career growth. Every minute you study counts! 🌱",
+            "Be persistent: continuous learning illuminates your path to success! ☀️",
+            "Knowledge is a seed. Cultivate it daily, and watch your capabilities grow! 🌳"
         ]
         return random.choice(quotes)
 
@@ -313,7 +313,7 @@ class GeminiService:
                 "$$x = 5$$\n\n"
                 "Substitute $x=5$ back into $2x+5$ to verify: $2(5)+5=15$. Correct!"
             )
-        return f"Hello! I am your AI Tutor. You asked: '{prompt}'. Focus on breaking down the topic into objectives, practicing equations, and discussing ecological impacts."
+        return f"Hello! I am your AI Tutor. You asked: '{prompt}'. Focus on breaking down the topic into objectives, practicing equations, and discussing real-world applications."
 
     @staticmethod
     def _generate_mock_practice_questions(prompt: str) -> List[Dict[str, Any]]:

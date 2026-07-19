@@ -7,32 +7,87 @@ import {
   BookOpen,
   Award,
   Shield,
-  Volume2,
   Users,
   Smile,
   Globe,
   Sparkles,
-  Leaf
+  BrainCircuit,
+  Lock,
+  FileText
 } from 'lucide-react';
 import { ClayCard, ClayButton } from '../components/ui';
+import { AppFooter } from '../components/layout/AppFooter';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
 
+  const features = [
+    {
+      icon: Compass,
+      title: 'AI Career Guidance',
+      desc: 'Receive personalized career path recommendations and guidelines tailored to your goals.'
+    },
+    {
+      icon: FileText,
+      title: 'Resume Builder',
+      desc: 'Build professional, polished resumes with AI-assisted guidance and templates.'
+    },
+    {
+      icon: Shield,
+      title: 'ATS Resume Analysis',
+      desc: 'Optimize your resume score to successfully pass automated Applicant Tracking Systems.'
+    },
+    {
+      icon: Users,
+      title: 'AI Interview Preparation',
+      desc: 'Practice mock interviews with AI-generated domain-specific questions.'
+    },
+    {
+      icon: Smile,
+      title: 'Personalized Learning Dashboard',
+      desc: 'Track Streaks, XP, and weekly goals on a customized dashboard.'
+    },
+    {
+      icon: Sparkles,
+      title: 'Skill Assessment',
+      desc: 'Test your technical and aptitude skills with adaptive mock quizzes.'
+    },
+    {
+      icon: BrainCircuit,
+      title: 'Career Roadmaps',
+      desc: 'Follow structured, step-by-step career path guides for top industry roles.'
+    },
+    {
+      icon: BookOpen,
+      title: 'Learning Resources',
+      desc: 'Access curated notes, formulas, video tutorials, and study materials.'
+    },
+    {
+      icon: Award,
+      title: 'Progress Tracking',
+      desc: 'Monitor your academic progress and career preparation analytics.'
+    },
+    {
+      icon: Lock,
+      title: 'Secure Student Authentication',
+      desc: 'Secure student accounts and authentication for all platform features.'
+    }
+  ];
+
   const faqs = [
     {
-      q: "How does PathFinder AI support offline learning in rural areas?",
-      a: "Students can download course materials, textbook notes, and gamified quizzes while connected to a school or community center internet. Once downloaded, these assets work entirely offline without requiring network data. Answers submitted offline are queued locally and automatically synchronized when the device returns to an online zone."
+      q: "What is PathFinder AI?",
+      a: "PathFinder AI is an AI-powered career guidance and learning platform designed for college students. It helps students build resumes, prepare for interviews, receive personalized career recommendations, practice aptitude and technical questions, improve coding skills, and access AI-powered learning assistance—all from a single platform."
     },
     {
-      q: "What role do parents play in the platform?",
-      a: "Parents receive a dedicated dashboard showing weekly progress. For parents who cannot read English, PathFinder AI translates reports and offers synthesized local language voice memos (Hindi, Telugu, Tamil, etc.) explaining their child's highlights."
+      q: "How does the ATS Resume Analysis feature work?",
+      a: "The ATS Resume Analysis instantly checks your uploaded resume against real Applicant Tracking System parameters to give you an optimization score, identifying key formatting issues and missing skills to pass automated screening."
     },
     {
-      q: "How does the AI Recommendation engine work?",
-      a: "Our backend monitors quiz scores and identifies specific weak topics (e.g., Fraction Division). The recommendation engine then curates lesson recommendations and custom flashcards to help the student master these topics step-by-step."
+      q: "How does the AI Interview Preparation tool assist students?",
+      a: "The AI Interview Preparation tool provides realistic mock interview sessions tailored to specific roles (e.g., Software Engineer, Data Analyst). It asks domain-specific questions, records your responses, and provides comprehensive feedback on how to improve."
     }
   ];
 
@@ -88,19 +143,19 @@ export const LandingPage: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 text-xs font-bold px-4 py-2 rounded-full shadow-sm animate-pulse-soft">
-            <Leaf size={14} />
-            <span>Theme: Sustainability & Social Impact</span>
+          <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 text-xs font-bold px-4 py-2 rounded-full shadow-sm">
+            <BrainCircuit size={14} />
+            <span>AI-Powered Career & Learning Platform</span>
           </div>
 
           <h1 className="font-heading font-extrabold text-4xl sm:text-5xl md:text-6xl text-text leading-[1.15] max-w-4xl">
-            Personalized Learning <br />
+            AI-Powered Career Guidance <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-              For Every Child, Everywhere
+              For College Students
             </span>
           </h1>
-          <p className="text-text/70 text-lg md:text-xl max-w-2xl font-medium mt-2">
-            Empowering children in rural and underserved communities with AI-driven tutoring, multilingual speech interaction, and offline study tools.
+          <p className="text-text/70 text-base md:text-lg max-w-3xl font-medium mt-2 leading-relaxed">
+            PathFinder AI is an AI-powered career guidance and learning platform designed for college students. It helps students build resumes, prepare for interviews, receive personalized career recommendations, practice aptitude and technical questions, improve coding skills, and access AI-powered learning assistance—all from a single platform.
           </p>
         </motion.div>
 
@@ -108,7 +163,7 @@ export const LandingPage: React.FC = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="flex flex-wrap gap-4 justify-center"
+          className="flex wrap gap-4 justify-center"
         >
           <ClayButton
             onClick={() => navigate('/signup')}
@@ -197,16 +252,16 @@ export const LandingPage: React.FC = () => {
       <section className="bg-white py-16 px-6 border-y border-slate-100">
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           <div className="flex flex-col gap-2">
-            <h3 className="font-heading font-extrabold text-4xl md:text-5xl text-primary">15,000+</h3>
-            <span className="text-sm font-semibold text-text/60">Students Reached in Rural Districts</span>
+            <h3 className="font-heading font-extrabold text-4xl md:text-5xl text-primary">10+</h3>
+            <span className="text-sm font-semibold text-text/60">AI Career & Learning Tools</span>
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="font-heading font-extrabold text-4xl md:text-5xl text-secondary">92%</h3>
-            <span className="text-sm font-semibold text-text/60">Average Score Improvement</span>
+            <h3 className="font-heading font-extrabold text-4xl md:text-5xl text-secondary">95%</h3>
+            <span className="text-sm font-semibold text-text/60">Placement Assessment Score Improvement</span>
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="font-heading font-extrabold text-4xl md:text-5xl text-accent">100%</h3>
-            <span className="text-sm font-semibold text-text/60">Offline-Capable Study Syncing</span>
+            <h3 className="font-heading font-extrabold text-4xl md:text-5xl text-accent">24/7</h3>
+            <span className="text-sm font-semibold text-text/60">AI Career Guidance & Assistance</span>
           </div>
         </div>
       </section>
@@ -215,43 +270,28 @@ export const LandingPage: React.FC = () => {
       <section className="px-6 py-20 max-w-6xl mx-auto flex flex-col gap-12">
         <div className="text-center max-w-2xl mx-auto flex flex-col gap-3">
           <h2 className="font-heading font-bold text-3xl sm:text-4xl text-text">
-            Everything Needed to Empower Learners
+            Key Features of PathFinder AI
           </h2>
           <p className="text-sm text-text/60 font-medium">
-            PathFinder AI provides deep personalization, helping educators support kids with diverse needs.
+            PathFinder AI provides deep personalization and career-building tools designed to maximize student readiness.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ClayCard className="flex flex-col gap-4 text-left hover:scale-[1.02]">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-              <Sparkles size={24} />
-            </div>
-            <h3 className="font-bold text-lg">AI Conversational Tutor</h3>
-            <p className="text-sm text-text/60 leading-relaxed">
-              Students ask questions through chat, upload worksheets for OCR handwriting decoding, or trigger voice commands.
-            </p>
-          </ClayCard>
-
-          <ClayCard className="flex flex-col gap-4 text-left hover:scale-[1.02]">
-            <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
-              <Volume2 size={24} />
-            </div>
-            <h3 className="font-bold text-lg">Multilingual Audio Reports</h3>
-            <p className="text-sm text-text/60 leading-relaxed">
-              Provides translation in Hindi, Telugu, Tamil, Marathi, and more. Bridges local dialects so no student or parent gets left behind.
-            </p>
-          </ClayCard>
-
-          <ClayCard className="flex flex-col gap-4 text-left hover:scale-[1.02]">
-            <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
-              <Award size={24} />
-            </div>
-            <h3 className="font-bold text-lg">Offline-First Synchronizer</h3>
-            <p className="text-sm text-text/60 leading-relaxed">
-              Save lesson notes, flashcards, and quizzes offline. Keep progress safe and auto-upload records when network joins.
-            </p>
-          </ClayCard>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((f, i) => {
+            const IconComponent = f.icon;
+            return (
+              <ClayCard key={i} className="flex flex-col gap-4 text-left hover:scale-[1.02] transition-transform duration-200">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <IconComponent size={24} />
+                </div>
+                <h3 className="font-bold text-lg">{f.title}</h3>
+                <p className="text-sm text-text/60 leading-relaxed">
+                  {f.desc}
+                </p>
+              </ClayCard>
+            );
+          })}
         </div>
       </section>
 
@@ -282,13 +322,8 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white py-12 px-6 border-t border-slate-100 text-center text-text/40 text-xs flex flex-col items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 bg-primary/10 rounded-xl text-primary font-bold text-sm">🌱</span>
-          <span className="font-heading font-bold text-sm text-primary">PathFinder AI</span>
-        </div>
-        <p>© 2026 PathFinder AI. All rights reserved. Supporting rural education under Sustainable Development Goals (SDG 4).</p>
-      </footer>
+      <AppFooter />
     </div>
   );
 };
+

@@ -31,6 +31,7 @@ const StudyGroups = lazy(() => import('./pages/StudyGroups').then(m => ({ defaul
 const CampusHub = lazy(() => import('./pages/CampusHub').then(m => ({ default: m.CampusHub })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const CareerDashboard = lazy(() => import('./pages/CareerDashboard').then(m => ({ default: m.CareerDashboard })));
+const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
 
 // ── Full-screen auth loading spinner ─────────────────────────────────────────
 const AuthLoadingScreen: React.FC = () => (
@@ -53,7 +54,7 @@ const RootRedirect: React.FC = () => {
 const ProtectedLayout: React.FC = () => {
   const { isAuthenticated, isInitializing } = useAuthStore();
 
-  // While Firebase / backend token is being verified, show spinner
+  // While backend token is being verified, show spinner
   if (isInitializing) return <AuthLoadingScreen />;
 
   // Not authenticated after init → redirect to login
@@ -144,6 +145,7 @@ function App() {
             <Route path="/campus" element={<CampusHub />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/career-dashboard" element={<CareerDashboard />} />
+            <Route path="/about" element={<AboutPage />} />
 
             {/* Teacher/Faculty Specific */}
             <Route element={<TeacherRoute />}>

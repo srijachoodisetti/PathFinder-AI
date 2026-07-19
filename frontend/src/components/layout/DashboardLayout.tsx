@@ -22,9 +22,11 @@ import {
   Briefcase,
   Code,
   FolderGit2,
-  Landmark
+  Landmark,
+  Info
 } from 'lucide-react';
 import { ClayCard, ClayButton } from '../ui';
+import { AppFooter } from './AppFooter';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -57,6 +59,7 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
         { path: '/certifications', label: 'Certifications', icon: Award },
         { path: '/ai-tutor', label: 'AI Tutor Chat', icon: BrainCircuit },
         { path: '/settings', label: 'Settings', icon: Settings },
+        { path: '/about', label: 'About', icon: Info },
       ];
     } else if (role === 'teacher') {
       return [
@@ -67,17 +70,20 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
         { path: '/campus', label: 'Campus Hub', icon: Landmark },
         { path: '/academic', label: 'Syllabus Review', icon: BookOpen },
         { path: '/settings', label: 'Settings', icon: Settings },
+        { path: '/about', label: 'About', icon: Info },
       ];
     } else if (role === 'parent') {
       return [
         { path: '/dashboard', label: 'Parent Portal', icon: HeartHandshake },
         { path: '/settings', label: 'Settings', icon: Settings },
+        { path: '/about', label: 'About', icon: Info },
       ];
     } else if (role === 'admin') {
       return [
         { path: '/dashboard', label: 'System Admin', icon: Settings },
         { path: '/admin', label: 'Curriculum & Users', icon: Users },
         { path: '/settings', label: 'Settings', icon: Settings },
+        { path: '/about', label: 'About', icon: Info },
       ];
     }
     return [];
@@ -155,7 +161,7 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
             </>
           )}
 
-          {/* User Profile dropdown representation */}
+          {/* User Profile */}
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-sm uppercase">
               {user?.full_name?.charAt(0) || 'U'}
@@ -186,7 +192,7 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
             w-64 bg-white border-r border-slate-100 p-4
             flex flex-col gap-2 transform md:transform-none transition-transform duration-300
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-            h-[calc(100vh-73px)]
+            h-[calc(100vh-73px)] overflow-y-auto
           `}
         >
           <div className="flex flex-col gap-1.5 flex-1">
@@ -216,16 +222,19 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
             })}
           </div>
 
-          {/* Sidebar Footer social mission indicator */}
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-[10px] text-text/50">
-            <p className="font-semibold text-text/70 mb-0.5">🌱 Mission: Eco Education</p>
-            <p>Empowering children in rural spaces with sustainable tools & learning.</p>
+          {/* Sidebar footer brand */}
+          <div className="p-3 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl border border-primary/10 text-[10px] text-text/50 mt-2">
+            <p className="font-bold text-text/70 mb-0.5">🌱 PathFinder AI</p>
+            <p>AI-powered career guidance for college students.</p>
           </div>
         </aside>
 
         {/* Content Area */}
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
-          {children}
+        <main className="flex flex-col flex-1 overflow-y-auto">
+          <div className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full">
+            {children}
+          </div>
+          <AppFooter />
         </main>
       </div>
     </div>
