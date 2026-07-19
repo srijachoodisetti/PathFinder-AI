@@ -136,6 +136,7 @@ function App() {
             <Route path="/groups" element={<StudyGroups />} />
             <Route path="/campus" element={<CampusHub />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<Navigate to="/settings" replace />} />
             <Route path="/career-dashboard" element={<CareerDashboard />} />
             <Route path="/about" element={<AboutPage />} />
 

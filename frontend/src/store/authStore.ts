@@ -156,11 +156,20 @@ onAuthStateChanged(auth, async (firebaseUser) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
       localStorage.setItem('token', idToken);
       
-      const docRef = doc(db, 'users', firebaseUser.uid);
-      const docSnap = await getDoc(docRef);
+      let firestoreProfile: any = null;
+      try {
+        if (db && typeof db.app === 'object') {
+          const docRef = doc(db, 'users', firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            firestoreProfile = docSnap.data();
+          }
+        }
+      } catch (dbErr) {
+        console.warn("Could not retrieve Firestore user profile, falling back to basic authentication state:", dbErr);
+      }
       
-      if (docSnap.exists()) {
-        const firestoreProfile = docSnap.data();
+      if (firestoreProfile) {
         const role = (firestoreProfile.role || 'student').toLowerCase();
         
         const userObj: UserProfile = {
